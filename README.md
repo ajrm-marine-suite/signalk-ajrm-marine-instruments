@@ -2,6 +2,10 @@
 
 ## Version 1.2
 
+`v0.5.2` replaces the live instrument dial internals with the SVG classic-gauge
+renderer from the design study, so Depth, Wind, SOG, COG, and Exhaust use the
+new dial faces rather than the older CSS needle layout.
+
 `v0.5.1` folds the classic-gauge design study into the live app. Depth now uses
 0-10, 0-50, 0-100, and 0-200m scale steps with hysteresis so it does not chatter
 around boundaries; the Wind card has a separate drift readout, purple tide/current
@@ -58,7 +62,7 @@ It displays:
 
 ```bash
 cd ~/.signalk
-npm install git+https://github.com/ajrm-marine-suite/signalk-ajrm-marine-instruments.git#v0.5.1 --omit=dev --no-package-lock
+npm install git+https://github.com/ajrm-marine-suite/signalk-ajrm-marine-instruments.git#v0.5.2 --omit=dev --no-package-lock
 sudo systemctl restart signalk
 ```
 

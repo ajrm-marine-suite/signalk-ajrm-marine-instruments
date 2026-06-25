@@ -733,6 +733,258 @@ p {
   white-space: nowrap;
 }
 
+.classic-gauge {
+  position: relative;
+  z-index: 3;
+  width: min(100%, 236px);
+  margin: 8px auto 0;
+}
+
+.classic-gauge svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.svg-gauge-face {
+  fill: #0a1013;
+  stroke: #2d3c42;
+  stroke-width: 1.5;
+}
+
+.svg-scale-arc {
+  fill: none;
+  stroke: #314046;
+  stroke-linecap: round;
+  stroke-width: 12;
+}
+
+.svg-sector {
+  fill: none;
+  stroke-linecap: butt;
+  stroke-width: 12;
+}
+
+.svg-tick-minor {
+  stroke: #6f8288;
+  stroke-width: 1;
+}
+
+.svg-tick-major {
+  stroke: #dcebee;
+  stroke-width: 2.2;
+}
+
+.svg-tick-label {
+  fill: #dcebee;
+  font-size: 10px;
+  font-weight: 800;
+  text-anchor: middle;
+  dominant-baseline: central;
+}
+
+.svg-wind-number {
+  font-size: 16px;
+  font-weight: 950;
+}
+
+.svg-needle {
+  stroke: #f97316;
+  stroke-linecap: round;
+  stroke-width: 3.8;
+  filter: drop-shadow(0 2px 3px rgba(0,0,0,0.6));
+}
+
+.svg-needle.true,
+.svg-needle.apparent,
+.svg-needle.current {
+  stroke-width: 3;
+}
+
+.svg-needle-hub {
+  fill: #172126;
+  stroke: #dcebee;
+  stroke-width: 1.2;
+}
+
+.svg-value-box {
+  fill: #d8e7c5;
+  stroke: #334134;
+  stroke-width: 1;
+}
+
+.svg-value-box.compact {
+  fill: #0b1114;
+  stroke: rgba(255,255,255,0.22);
+}
+
+.svg-value-text {
+  fill: #182015;
+  font-size: 25px;
+  font-weight: 920;
+  text-anchor: middle;
+  dominant-baseline: central;
+}
+
+.svg-value-text.compact {
+  fill: #edf7f8;
+  font-size: 21px;
+}
+
+.svg-unit-text,
+.svg-measurement-text {
+  fill: #25311f;
+  font-size: 8px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-anchor: middle;
+  text-transform: uppercase;
+}
+
+.svg-unit-text.compact {
+  fill: #8fa5ad;
+}
+
+.svg-label-text {
+  fill: #edf7f8;
+  font-size: 10px;
+  font-weight: 850;
+  letter-spacing: 0.1em;
+  text-anchor: middle;
+  text-transform: uppercase;
+}
+
+.classic-wind-panel {
+  position: relative;
+  z-index: 2;
+  min-height: 330px;
+  margin-top: 2px;
+  overflow: visible;
+  border-radius: 12px;
+  background:
+    radial-gradient(circle at 50% 38%, rgba(36, 77, 84, 0.26), transparent 35%),
+    repeating-linear-gradient(0deg, rgba(255,255,255,0.016) 0 1px, transparent 1px 7px),
+    linear-gradient(180deg, #111619, #050607 72%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    inset 0 -20px 42px rgba(0,0,0,0.72);
+}
+
+.wind-dial-wrap {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 3;
+  width: min(72%, 326px);
+  transform: translate(-50%, -50%);
+}
+
+.wind-gauge {
+  margin-top: 0;
+}
+
+.needle-legend {
+  position: absolute;
+  left: -4px;
+  top: 50%;
+  z-index: 4;
+  display: grid;
+  gap: 7px;
+  transform: translate(-100%, -50%);
+}
+
+.legend-badge {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  border: 2px solid currentColor;
+  border-radius: 999px;
+  background: #071013;
+  color: currentColor;
+  font-size: 0.95rem;
+  font-weight: 960;
+  line-height: 1;
+  box-shadow: 0 2px 7px rgba(0,0,0,0.55);
+}
+
+.readout {
+  min-height: 56px;
+  padding: 6px 8px 7px;
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 6px;
+  background: linear-gradient(180deg, #182126, #0c1114);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
+}
+
+.wind-lcd-card {
+  position: absolute;
+  z-index: 4;
+  width: 21%;
+  min-height: 56px;
+  padding: 6px 8px 7px;
+  overflow: hidden;
+  border-color: currentColor;
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0.015) 40%),
+    #0b1114;
+}
+
+.wind-top-left { left: 12%; top: 44px; }
+.wind-top-right { right: 12%; top: 44px; }
+.wind-top-centre {
+  left: 50%;
+  top: 6px;
+  width: 27%;
+  min-height: 39px;
+  transform: translateX(-50%);
+}
+.wind-bottom-left { left: 12%; bottom: 54px; }
+.wind-bottom-right { right: 12%; bottom: 54px; }
+.wind-bottom-centre {
+  left: 50%;
+  bottom: 10px;
+  width: 27%;
+  min-height: 39px;
+  transform: translateX(-50%);
+}
+
+.wind-lcd-card::after {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 3px;
+  content: "";
+  background: currentColor;
+  opacity: 0.9;
+}
+
+.readout.right { text-align: right; }
+.readout.centre { text-align: center; }
+
+.readout strong {
+  display: block;
+  color: #edf7f8;
+  font-size: clamp(0.95rem, 1.95vw, 1.42rem);
+  line-height: 1;
+}
+
+.readout span {
+  display: block;
+  margin-top: 3px;
+  color: currentColor;
+  font-size: 0.58rem;
+  font-weight: 860;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.true-label { color: var(--true-wind); }
+.apparent-label { color: var(--apparent-wind); }
+.tide-label { color: var(--tide-current); }
+
 [data-band="safe"] .lcd {
   box-shadow:
     inset 0 1px 3px rgba(255, 255, 255, 0.32),
@@ -774,6 +1026,44 @@ p {
 
   .wind-bezel {
     min-height: 0;
+  }
+
+  .classic-wind-panel {
+    min-height: 520px;
+  }
+
+  .wind-dial-wrap {
+    top: 47%;
+    width: min(78%, 260px);
+  }
+
+  .wind-lcd-card {
+    width: calc(50% - 6px);
+  }
+
+  .wind-top-left,
+  .wind-bottom-left {
+    left: 0;
+  }
+
+  .wind-top-right,
+  .wind-bottom-right {
+    right: 0;
+  }
+
+  .wind-top-centre {
+    top: 100px;
+    width: 48%;
+  }
+
+  .wind-bottom-centre {
+    bottom: 66px;
+    width: 48%;
+  }
+
+  .needle-legend {
+    left: 0;
+    transform: translateY(-50%);
   }
 
   .wind-panel {

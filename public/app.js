@@ -1,8 +1,6 @@
 const API = "../plugins/signalk-ajrm-marine-instruments";
 const DEFAULT_REFRESH_SECONDS = 3;
 const HIDDEN_REFRESH_SECONDS = 15;
-const GAUGE_MIN_ANGLE = -120;
-const GAUGE_MAX_ANGLE = 120;
 const DEPTH_SCALE_STEPS = [10, 50, 100, 200];
 const DEPTH_SCALE_HYSTERESIS = {
   stepUpFactor: 1.1,
@@ -15,29 +13,21 @@ const elements = {
   statusDot: document.getElementById("statusDot"),
   statusText: document.getElementById("statusText"),
   depthInstrument: document.getElementById("depthInstrument"),
-  depthValue: document.getElementById("depthValue"),
+  depthGauge: document.getElementById("depthGauge"),
   depthSource: document.getElementById("depthSource"),
-  depthNeedle: document.getElementById("depthNeedle"),
-  depthScale: scaleElements("depth"),
   windInstrument: document.getElementById("windInstrument"),
-  trueWindNeedle: document.getElementById("trueWindNeedle"),
-  apparentWindNeedle: document.getElementById("apparentWindNeedle"),
-  currentSetNeedle: document.getElementById("currentSetNeedle"),
+  windGauge: document.getElementById("windGauge"),
   trueWindDirection: document.getElementById("trueWindDirection"),
   apparentWindAngle: document.getElementById("apparentWindAngle"),
   trueWindSpeed: document.getElementById("trueWindSpeed"),
   trueWindAngle: document.getElementById("trueWindAngle"),
-  apparentWindSpeed: document.getElementById("apparentWindSpeed"),
   tideDrift: document.getElementById("tideDrift"),
   tideSetAngle: document.getElementById("tideSetAngle"),
   windDetail: document.getElementById("windDetail"),
   sogInstrument: document.getElementById("sogInstrument"),
-  sogNeedle: document.getElementById("sogNeedle"),
-  sogValue: document.getElementById("sogValue"),
-  sogScale: scaleElements("sog"),
+  sogGauge: document.getElementById("sogGauge"),
   cogInstrument: document.getElementById("cogInstrument"),
-  cogNeedle: document.getElementById("cogNeedle"),
-  cogValue: document.getElementById("cogValue"),
+  cogGauge: document.getElementById("cogGauge"),
   gpsInstrument: document.getElementById("gpsInstrument"),
   gpsFixLabel: document.getElementById("gpsFixLabel"),
   gpsAccuracy: document.getElementById("gpsAccuracy"),
@@ -46,9 +36,7 @@ const elements = {
   gpsSatellites: document.getElementById("gpsSatellites"),
   gpsDilution: document.getElementById("gpsDilution"),
   temperatureInstrument: document.getElementById("temperatureInstrument"),
-  temperatureNeedle: document.getElementById("temperatureNeedle"),
-  engineTemp: document.getElementById("engineTemp"),
-  tempScale: scaleElements("temp"),
+  temperatureGauge: document.getElementById("temperatureGauge"),
 };
 
 let refreshTimer = null;
@@ -81,10 +69,18 @@ function render(status) {
   const depth = status.depth?.meters;
   activeDepthScale = chooseDepthScale(depth, activeDepthScale);
   const depthScale = scaleFromMax(activeDepthScale || 10);
-  setText(elements.depthValue, formatNumber(depth, 1));
+  renderClassicGauge(elements.depthGauge, {
+    label: "Depth",
+    units: "m",
+    measurement: `0-${depthScale.max} m scale`,
+    min: 0,
+    max: depthScale.max,
+    value: depth,
+    major: depthMajorStep(depthScale.max),
+    minor: depthMinorStep(depthScale.max),
+    sectors: depthSectors(depthScale.max),
+  });
   setText(elements.depthSource, `${labelDepthSource(status.depth?.source)} - 0-${depthScale.max} m scale`);
-  setGaugeScale(elements.depthScale, depthScale);
-  rotateGauge(elements.depthNeedle, depth, 0, depthScale.max, GAUGE_MIN_ANGLE, GAUGE_MAX_ANGLE);
   setBand(elements.depthInstrument, depthBand(depth));
 
   const trueWind = status.wind?.true || {};
@@ -94,9 +90,20 @@ function render(status) {
   setText(elements.apparentWindAngle, formatRelativeAngle(apparentWind.angleDegrees));
   setText(elements.trueWindSpeed, formatNumber(trueWind.speedKnots, 1));
   setText(elements.trueWindAngle, formatRelativeAngle(trueWind.angleDegrees));
-  setText(elements.apparentWindSpeed, formatNumber(apparentWind.speedKnots, 1));
   setText(elements.tideDrift, formatNumber(current.driftKnots, 1));
-  setText(elements.tideSetAngle, formatHeading(current.setTrueDegrees, current.setCardinal, "T"));
+  setText(elements.tideSetAngle, formatHeading(current.setTrueDegrees, current.setCardinal, ""));
+  renderCompassGauge(elements.windGauge, {
+    label: "Wind",
+    valueText: formatNumber(apparentWind.speedKnots, 1),
+    units: "AWS kt",
+    windScale: true,
+    compactValueBox: true,
+    needles: [
+      { angleDeg: apparentWind.angleDegrees, color: "#f6a31a", className: "apparent", length: 78 },
+      { angleDeg: trueWind.angleDegrees, color: "#22c7f2", className: "true", length: 68 },
+      { angleDeg: current.setRelativeDegrees, color: "#9f7bff", className: "current", length: 52 },
+    ],
+  });
   setText(
     elements.windDetail,
     [
@@ -106,22 +113,32 @@ function render(status) {
       current.driftKnots == null ? "" : `Tide ${current.driftKnots} kn ${current.setCardinal || ""}`,
     ].filter(Boolean).join(" - ") || "--",
   );
-  rotateCompass(elements.trueWindNeedle, trueWind.angleDegrees);
-  rotateCompass(elements.apparentWindNeedle, apparentWind.angleDegrees);
-  rotateCompass(elements.currentSetNeedle, current.setRelativeDegrees);
   setBand(elements.windInstrument, windBand(trueWind.speedKnots ?? apparentWind.speedKnots));
 
   const nav = status.navigation || {};
   const sogScale = chooseScale(nav.sogKnots, SOG_SCALE_STEPS, 6);
-  setText(elements.sogValue, formatNumber(nav.sogKnots, 1));
-  setGaugeScale(elements.sogScale, sogScale);
-  rotateGauge(elements.sogNeedle, nav.sogKnots, 0, sogScale.max, GAUGE_MIN_ANGLE, GAUGE_MAX_ANGLE);
+  renderClassicGauge(elements.sogGauge, {
+    label: "SOG",
+    units: "kn",
+    min: 0,
+    max: sogScale.max,
+    value: nav.sogKnots,
+    major: sogScale.max / 4,
+    minor: sogScale.max / 8,
+    sectors: [
+      { from: 0, to: Math.min(2, sogScale.max), color: "#34c8f3" },
+      { from: Math.min(2, sogScale.max), to: sogScale.max, color: "#27d36b" },
+    ].filter((sector) => sector.to > sector.from),
+  });
   setBand(elements.sogInstrument, speedBand(nav.sogKnots));
-  rotateCompass(elements.cogNeedle, nav.cogDegrees);
-  setText(
-    elements.cogValue,
-    nav.cogDegrees == null ? "--" : `${String(Math.round(nav.cogDegrees)).padStart(3, "0")}° ${nav.cogCardinal}`,
-  );
+  renderCompassGauge(elements.cogGauge, {
+    label: "COG",
+    valueText: nav.cogDegrees == null ? "--" : `${String(Math.round(nav.cogDegrees)).padStart(3, "0")}°`,
+    units: nav.cogCardinal || "",
+    needles: [
+      { angleDeg: nav.cogDegrees, color: "#f97316", className: "course", length: 76 },
+    ],
+  });
   setBand(elements.cogInstrument, nav.cogDegrees == null ? "offline" : "safe");
 
   const gps = status.gps || {};
@@ -136,10 +153,182 @@ function render(status) {
 
   const temp = status.exhaustWater?.temperatureCelsius ?? status.engineRoom?.temperatureCelsius;
   const tempScale = chooseScale(temp, TEMPERATURE_SCALE_STEPS, 100);
-  setText(elements.engineTemp, formatNumber(temp, 1));
-  setGaugeScale(elements.tempScale, tempScale);
-  rotateGauge(elements.temperatureNeedle, temp, 0, tempScale.max, GAUGE_MIN_ANGLE, GAUGE_MAX_ANGLE);
+  renderClassicGauge(elements.temperatureGauge, {
+    label: "Exhaust",
+    units: "°C",
+    min: 0,
+    max: tempScale.max,
+    value: temp,
+    major: tempScale.max / 4,
+    minor: tempScale.max / 8,
+    sectors: [
+      { from: 0, to: Math.min(70, tempScale.max), color: "#27d36b" },
+      { from: Math.min(70, tempScale.max), to: tempScale.max, color: "#ef3f3f" },
+    ].filter((sector) => sector.to > sector.from),
+  });
   setBand(elements.temperatureInstrument, temperatureBand(temp));
+}
+
+function polar(cx, cy, radius, angleDeg) {
+  const angle = (angleDeg - 90) * Math.PI / 180;
+  return {
+    x: cx + radius * Math.cos(angle),
+    y: cy + radius * Math.sin(angle),
+  };
+}
+
+function arcPath(cx, cy, radius, startDeg, endDeg) {
+  const start = polar(cx, cy, radius, startDeg);
+  const end = polar(cx, cy, radius, endDeg);
+  const largeArc = Math.abs(endDeg - startDeg) > 180 ? 1 : 0;
+  const sweep = endDeg >= startDeg ? 1 : 0;
+  return `M ${start.x.toFixed(3)} ${start.y.toFixed(3)} A ${radius} ${radius} 0 ${largeArc} ${sweep} ${end.x.toFixed(3)} ${end.y.toFixed(3)}`;
+}
+
+function valueAngle(value, min, max, startDeg, endDeg) {
+  const span = max - min || 1;
+  const number = Number(value);
+  const ratio = Number.isFinite(number) ? clamp((number - min) / span, 0, 1) : 0;
+  return startDeg + (endDeg - startDeg) * ratio;
+}
+
+function renderClassicGauge(node, options) {
+  if (!node) return;
+  const {
+    min = 0,
+    max = 10,
+    value = null,
+    units = "",
+    label = "",
+    measurement = "",
+    major = 2,
+    minor = 1,
+    decimals = 1,
+    startDeg = 220,
+    endDeg = 500,
+    sectors = [],
+  } = options;
+  const cx = 110;
+  const cy = 112;
+  const radius = 82;
+  const scaleRadius = 76;
+  const tickParts = [];
+  for (let tick = min; tick <= max + 0.0001; tick += minor) {
+    const isMajor = Math.abs((tick - min) / major - Math.round((tick - min) / major)) < 0.0001;
+    const angle = valueAngle(tick, min, max, startDeg, endDeg);
+    const outer = polar(cx, cy, scaleRadius, angle);
+    const inner = polar(cx, cy, scaleRadius - (isMajor ? 13 : 8), angle);
+    tickParts.push(`<line class="${isMajor ? "svg-tick-major" : "svg-tick-minor"}" x1="${inner.x.toFixed(3)}" y1="${inner.y.toFixed(3)}" x2="${outer.x.toFixed(3)}" y2="${outer.y.toFixed(3)}"></line>`);
+    if (isMajor) {
+      const text = polar(cx, cy, scaleRadius - 24, angle);
+      tickParts.push(`<text class="svg-tick-label" x="${text.x.toFixed(3)}" y="${text.y.toFixed(3)}">${formatScaleLabel(tick)}</text>`);
+    }
+  }
+  const sectorParts = sectors.map((sector, index) => {
+    const start = valueAngle(sector.from, min, max, startDeg, endDeg);
+    const end = valueAngle(sector.to, min, max, startDeg, endDeg);
+    return `<path class="svg-sector svg-sector-${index}" d="${arcPath(cx, cy, radius, start, end)}" style="stroke:${sector.color}"></path>`;
+  });
+  const needleAngle = valueAngle(value, min, max, startDeg, endDeg);
+  const needleEnd = polar(cx, cy, 68, needleAngle);
+  const displayValue = Number.isFinite(Number(value)) ? Number(value).toFixed(decimals) : "--";
+  node.innerHTML = `
+    <svg viewBox="0 0 220 220" role="img" aria-label="${escapeHtml(label)} gauge">
+      <circle class="svg-gauge-face" cx="${cx}" cy="${cy}" r="98"></circle>
+      <path class="svg-scale-arc" d="${arcPath(cx, cy, radius, startDeg, endDeg)}"></path>
+      ${sectorParts.join("")}
+      ${tickParts.join("")}
+      <line class="svg-needle" x1="${cx}" y1="${cy}" x2="${needleEnd.x.toFixed(3)}" y2="${needleEnd.y.toFixed(3)}"></line>
+      <circle class="svg-needle-hub" cx="${cx}" cy="${cy}" r="8"></circle>
+      <rect class="svg-value-box" x="72" y="143" width="76" height="42" rx="4"></rect>
+      <text class="svg-value-text" x="${cx}" y="160">${escapeHtml(displayValue)}</text>
+      <text class="svg-unit-text" x="${cx}" y="177">${escapeHtml(units)}</text>
+      <text class="svg-label-text" x="${cx}" y="36">${escapeHtml(label)}</text>
+      <text class="svg-measurement-text" x="${cx}" y="133">${escapeHtml(measurement)}</text>
+    </svg>
+  `;
+}
+
+function renderCompassGauge(node, options) {
+  if (!node) return;
+  const cx = 110;
+  const cy = 112;
+  const currentArrowId = `${node.id || "compass"}-current-arrowhead`;
+  const valueBox = options.compactValueBox
+    ? { x: 81.5, y: 132, width: 57, height: 31.5, rx: 3, valueY: 144, unitY: 158, boxClass: "svg-value-box compact", valueClass: "svg-value-text compact", unitClass: "svg-unit-text compact" }
+    : { x: 72, y: 143, width: 76, height: 42, rx: 4, valueY: 160, unitY: 177, boxClass: "svg-value-box", valueClass: "svg-value-text", unitClass: "svg-unit-text" };
+  const ticks = [];
+  for (let deg = 0; deg < 360; deg += 10) {
+    const major = deg % 30 === 0;
+    const outer = polar(cx, cy, 82, deg);
+    const inner = polar(cx, cy, major ? 68 : 74, deg);
+    ticks.push(`<line class="${major ? "svg-tick-major" : "svg-tick-minor"}" x1="${inner.x.toFixed(3)}" y1="${inner.y.toFixed(3)}" x2="${outer.x.toFixed(3)}" y2="${outer.y.toFixed(3)}"></line>`);
+  }
+  const needles = (options.needles || []).map((needle) => {
+    const angle = Number(needle.angleDeg);
+    if (!Number.isFinite(angle)) return "";
+    const end = polar(cx, cy, needle.length || 70, angle);
+    const className = `svg-needle ${needle.className || ""}`;
+    const marker = needle.className === "current" ? ` marker-end="url(#${currentArrowId})"` : "";
+    return `<line class="${className}" x1="${cx}" y1="${cy}" x2="${end.x.toFixed(3)}" y2="${end.y.toFixed(3)}"${marker}></line>` +
+      `<style>#${node.id} .${needle.className}{stroke:${needle.color}}#${node.id} .svg-current-arrowhead{fill:${needle.color}}</style>`;
+  });
+  const windLabels = options.windScale
+    ? `
+      <text class="svg-tick-label svg-wind-number" x="83" y="66">30</text>
+      <text class="svg-tick-label svg-wind-number" x="137" y="66">30</text>
+      <text class="svg-tick-label svg-wind-number" x="61" y="95">60</text>
+      <text class="svg-tick-label svg-wind-number" x="159" y="95">60</text>
+      <text class="svg-tick-label svg-wind-number" x="51" y="126">90</text>
+      <text class="svg-tick-label svg-wind-number" x="169" y="126">90</text>
+      <text class="svg-tick-label svg-wind-number" x="72" y="164">120</text>
+      <text class="svg-tick-label svg-wind-number" x="148" y="164">120</text>
+    `
+    : `
+      <text class="svg-tick-label" x="${cx}" y="34">N</text>
+      <text class="svg-tick-label" x="188" y="${cy}">E</text>
+      <text class="svg-tick-label" x="${cx}" y="190">S</text>
+      <text class="svg-tick-label" x="32" y="${cy}">W</text>
+    `;
+  node.innerHTML = `
+    <svg viewBox="0 0 220 220" role="img" aria-label="${escapeHtml(options.label)} compass">
+      <defs>
+        <marker id="${currentArrowId}" viewBox="0 0 8 8" markerWidth="3.6" markerHeight="3.6" refX="7" refY="4" orient="auto" markerUnits="strokeWidth">
+          <path class="svg-current-arrowhead" d="M 0 0 L 8 4 L 0 8 z"></path>
+        </marker>
+      </defs>
+      <circle class="svg-gauge-face" cx="${cx}" cy="${cy}" r="98"></circle>
+      ${ticks.join("")}
+      ${windLabels}
+      ${needles.join("")}
+      <circle class="svg-needle-hub" cx="${cx}" cy="${cy}" r="10"></circle>
+      <rect class="${valueBox.boxClass}" x="${valueBox.x}" y="${valueBox.y}" width="${valueBox.width}" height="${valueBox.height}" rx="${valueBox.rx}"></rect>
+      <text class="${valueBox.valueClass}" x="${cx}" y="${valueBox.valueY}">${escapeHtml(options.valueText || "--")}</text>
+      <text class="${valueBox.unitClass}" x="${cx}" y="${valueBox.unitY}">${escapeHtml(options.units || "")}</text>
+      <text class="svg-label-text" x="${cx}" y="36">${escapeHtml(options.label)}</text>
+    </svg>
+  `;
+}
+
+function depthMajorStep(maxDepth) {
+  if (maxDepth <= 10) return 2;
+  if (maxDepth <= 50) return 10;
+  if (maxDepth <= 100) return 20;
+  return 50;
+}
+
+function depthMinorStep(maxDepth) {
+  if (maxDepth <= 10) return 1;
+  if (maxDepth <= 50) return 5;
+  return 10;
+}
+
+function depthSectors(maxDepth) {
+  return [
+    { from: 0, to: Math.min(2, maxDepth), color: "#ef3f3f" },
+    { from: Math.min(2, maxDepth), to: Math.min(4, maxDepth), color: "#f5b642" },
+    { from: Math.min(4, maxDepth), to: maxDepth, color: "#27d36b" },
+  ].filter((sector) => sector.to > sector.from);
 }
 
 async function getJson(url) {
@@ -281,6 +470,16 @@ function formatScaleLabel(value) {
   if (number >= 100) return String(Math.round(number));
   if (Number.isInteger(number)) return String(number);
   return number.toFixed(1).replace(/\.0$/, "");
+}
+
+function escapeHtml(value) {
+  return String(value ?? "").replace(/[&<>"']/g, (char) => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;",
+  })[char]);
 }
 
 function rotateGauge(element, value, min, max, minAngle, maxAngle, invert = false) {

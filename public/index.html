@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>AJRM Marine Instruments</title>
-    <link rel="stylesheet" href="./styles.css?v=0.5.1" />
+    <link rel="stylesheet" href="./styles.css?v=0.5.2" />
   </head>
   <body>
     <main>
@@ -23,23 +23,7 @@
         <article id="depthInstrument" class="instrument gauge-card medium" data-band="offline">
           <div class="bezel">
             <div class="brand">Depth</div>
-            <div class="face gauge depth-scale">
-              <div class="ticks"></div>
-              <div id="depthScale0" class="scale-label scale-start">0</div>
-              <div id="depthScale25" class="scale-label scale-quarter">2.5</div>
-              <div id="depthScale50" class="scale-label scale-mid">5</div>
-              <div id="depthScale75" class="scale-label scale-three-quarter">7.5</div>
-              <div id="depthScale100" class="scale-label scale-end">10</div>
-              <div class="arc shallow"></div>
-              <div class="arc caution"></div>
-              <div class="arc safe"></div>
-              <div id="depthNeedle" class="needle"></div>
-              <div class="hub"></div>
-              <div class="lcd">
-                <span id="depthValue" class="value">--</span>
-                <span class="unit">m</span>
-              </div>
-            </div>
+            <div id="depthGauge" class="classic-gauge"></div>
           </div>
           <p id="depthSource" class="subtext">below keel</p>
         </article>
@@ -47,54 +31,38 @@
         <article id="windInstrument" class="instrument gauge-card wind-card wide" data-band="offline">
           <div class="bezel wind-bezel">
             <div class="brand garmin-style">Wind</div>
-            <div class="wind-panel">
-              <div class="wind-readout top-left">
+            <div class="classic-wind-panel">
+              <div class="readout wind-lcd-card true-label wind-top-left">
                 <strong id="trueWindDirection">--</strong>
                 <span>TWD</span>
               </div>
-              <div class="wind-readout top-right">
+              <div class="readout wind-lcd-card apparent-label right wind-top-right">
                 <strong id="apparentWindAngle">--</strong>
                 <span>AWA</span>
               </div>
-              <div class="wind-readout tide-readout drift-readout top-centre">
+              <div class="readout wind-lcd-card tide-label centre wind-top-centre">
                 <strong id="tideDrift">--</strong>
-                <span>Drift kt</span>
+                <span>drift kt</span>
               </div>
-              <div class="wind-readout bottom-left">
+              <div class="wind-dial-wrap">
+                <div class="needle-legend" aria-label="Wind needle legend">
+                  <span class="legend-badge apparent-label">A</span>
+                  <span class="legend-badge true-label">T</span>
+                  <span class="legend-badge tide-label">C</span>
+                </div>
+                <div id="windGauge" class="classic-gauge wind-gauge"></div>
+              </div>
+              <div class="readout wind-lcd-card true-label wind-bottom-left">
                 <strong id="trueWindSpeed">--</strong>
                 <span>TWS kt</span>
               </div>
-              <div class="wind-readout bottom-right">
+              <div class="readout wind-lcd-card tide-label centre wind-bottom-centre">
+                <strong id="tideSetAngle">--</strong>
+                <span>tide set</span>
+              </div>
+              <div class="readout wind-lcd-card apparent-label right wind-bottom-right">
                 <strong id="trueWindAngle">--</strong>
                 <span>TWA</span>
-              </div>
-
-              <div class="face compass wind-scale tactical-wind-dial">
-                <div class="ticks compass-ticks"></div>
-                <div class="wind-sector port"></div>
-                <div class="wind-sector starboard"></div>
-                <span class="wind-number wind-30-port">30</span>
-                <span class="wind-number wind-30-starboard">30</span>
-                <span class="wind-number wind-60-port">60</span>
-                <span class="wind-number wind-60-starboard">60</span>
-                <span class="wind-number wind-90-port">90</span>
-                <span class="wind-number wind-90-starboard">90</span>
-                <span class="wind-number wind-120-port">120</span>
-                <span class="wind-number wind-120-starboard">120</span>
-                <div class="bow-marker"></div>
-                <div id="trueWindNeedle" class="compass-needle true wind-pointer"></div>
-                <div id="apparentWindNeedle" class="compass-needle apparent wind-pointer"></div>
-                <div id="currentSetNeedle" class="compass-needle current wind-pointer"></div>
-                <div class="hub wind-hub"></div>
-                <div class="lcd wind-lcd aws-lcd">
-                  <span id="apparentWindSpeed" class="value small">--</span>
-                  <span class="unit">AWS kt</span>
-                </div>
-              </div>
-
-              <div class="wind-readout tide-readout">
-                <strong id="tideSetAngle">--</strong>
-                <span>Tide set</span>
               </div>
             </div>
           </div>
@@ -104,22 +72,7 @@
         <article id="sogInstrument" class="instrument gauge-card" data-band="offline">
           <div class="bezel">
             <div class="brand">SOG</div>
-            <div class="face gauge sog-scale">
-              <div class="ticks"></div>
-              <div id="sogScale0" class="scale-label scale-start">0</div>
-              <div id="sogScale25" class="scale-label scale-quarter">1.5</div>
-              <div id="sogScale50" class="scale-label scale-mid">3</div>
-              <div id="sogScale75" class="scale-label scale-three-quarter">4.5</div>
-              <div id="sogScale100" class="scale-label scale-end">6</div>
-              <div class="arc slow"></div>
-              <div class="arc cruise"></div>
-              <div id="sogNeedle" class="needle"></div>
-              <div class="hub"></div>
-              <div class="lcd">
-                <span id="sogValue" class="value">--</span>
-                <span class="unit">kn</span>
-              </div>
-            </div>
+            <div id="sogGauge" class="classic-gauge"></div>
           </div>
           <p class="subtext">Speed over ground</p>
         </article>
@@ -127,18 +80,7 @@
         <article id="cogInstrument" class="instrument gauge-card" data-band="offline">
           <div class="bezel">
             <div class="brand">COG</div>
-            <div class="face compass compact">
-              <div class="ticks compass-ticks"></div>
-              <div id="cogNeedle" class="compass-needle course"></div>
-              <div class="hub"></div>
-              <span class="cardinal north">N</span>
-              <span class="cardinal east">E</span>
-              <span class="cardinal south">S</span>
-              <span class="cardinal west">W</span>
-              <div class="lcd lcd-low">
-                <span id="cogValue" class="value heading">--</span>
-              </div>
-            </div>
+            <div id="cogGauge" class="classic-gauge compass-gauge"></div>
           </div>
           <p class="subtext">Course over ground</p>
         </article>
@@ -178,28 +120,13 @@
         <article id="temperatureInstrument" class="instrument gauge-card" data-band="offline">
           <div class="bezel">
             <div class="brand">Exhaust</div>
-            <div class="face gauge temp-scale">
-              <div class="ticks"></div>
-              <div id="tempScale0" class="scale-label scale-start">0</div>
-              <div id="tempScale25" class="scale-label scale-quarter">25</div>
-              <div id="tempScale50" class="scale-label scale-mid">50</div>
-              <div id="tempScale75" class="scale-label scale-three-quarter">75</div>
-              <div id="tempScale100" class="scale-label scale-end">100</div>
-              <div class="arc normal"></div>
-              <div class="arc hot"></div>
-              <div id="temperatureNeedle" class="needle"></div>
-              <div class="hub"></div>
-              <div class="lcd">
-                <span id="engineTemp" class="value">--</span>
-                <span class="unit">°C</span>
-              </div>
-            </div>
+            <div id="temperatureGauge" class="classic-gauge"></div>
           </div>
           <p class="subtext" aria-hidden="true"></p>
         </article>
       </section>
     </main>
 
-    <script src="./app.js?v=0.5.1"></script>
+    <script src="./app.js?v=0.5.2"></script>
   </body>
 </html>
