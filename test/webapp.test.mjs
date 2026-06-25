@@ -23,6 +23,7 @@ test("webapp uses compact marine classic hybrid instruments", () => {
   assert.match(html, /id="trueWindAngle"/);
   assert.match(html, /id="tideDrift"/);
   assert.match(html, /id="tideSetAngle"/);
+  assert.match(html, /drift-readout top-centre/);
   assert.match(html, /id="depthScale100"/);
   assert.match(html, /id="sogScale100"/);
   assert.match(html, /id="tempScale100"/);
@@ -41,6 +42,9 @@ test("webapp uses compact marine classic hybrid instruments", () => {
   assert.doesNotMatch(css, /\.wind-readout\s*\{[^}]*position: absolute;/s);
   assert.match(css, /\.tactical-wind-dial/);
   assert.match(css, /\.wind-pointer\.apparent/);
+  assert.match(css, /\.wind-pointer\.current::before\s*\{[^}]*border-bottom-color: var\(--tide-current\)/s);
+  assert.match(css, /\.aws-lcd\s*\{[^}]*bottom: 24%/s);
+  assert.match(css, /\.drift-readout/);
   assert.match(css, /\.scale-quarter/);
   assert.match(css, /\.gps-panel/);
   assert.match(css, /\.gps-card/);
@@ -51,14 +55,17 @@ test("webapp uses compact marine classic hybrid instruments", () => {
   assert.match(app, /setBand\(elements\.depthInstrument, depthBand\(depth\)\)/);
   assert.match(app, /formatRelativeAngle\(apparentWind\.angleDegrees\)/);
   assert.match(app, /current\.driftKnots/);
-  assert.match(app, /const DEPTH_SCALE_STEPS = \[10, 20, 50, 100, 200, 300, 500\]/);
-  assert.match(app, /chooseScale\(depth, DEPTH_SCALE_STEPS, 10\)/);
+  assert.match(app, /const DEPTH_SCALE_STEPS = \[10, 50, 100, 200\]/);
+  assert.match(app, /const DEPTH_SCALE_HYSTERESIS = \{/);
+  assert.match(app, /let activeDepthScale = null/);
+  assert.match(app, /chooseDepthScale\(depth, activeDepthScale\)/);
   assert.match(app, /setGaugeScale\(elements\.depthScale, depthScale\)/);
   assert.match(app, /formatCoordinate\(gps\.latitude, "N", "S"\)/);
   assert.match(app, /formatGpsAccuracy\(gps\)/);
   assert.match(app, /gpsBand\(gps\)/);
   assert.doesNotMatch(app, /updatedAt/);
   assert.doesNotMatch(app, /temperatureFill/);
+  assert.doesNotMatch(html, /Water temperature/);
 });
 
 test("webapp slows status polling when hidden", () => {

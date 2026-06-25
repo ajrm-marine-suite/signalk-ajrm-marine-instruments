@@ -3,7 +3,11 @@ const DEFAULT_REFRESH_SECONDS = 3;
 const HIDDEN_REFRESH_SECONDS = 15;
 const GAUGE_MIN_ANGLE = -120;
 const GAUGE_MAX_ANGLE = 120;
-const DEPTH_SCALE_STEPS = [10, 20, 50, 100, 200, 300, 500];
+const DEPTH_SCALE_STEPS = [10, 50, 100, 200];
+const DEPTH_SCALE_HYSTERESIS = {
+  stepUpFactor: 1.1,
+  stepDownFactor: 0.85,
+};
 const SOG_SCALE_STEPS = [6, 12, 24, 40];
 const TEMPERATURE_SCALE_STEPS = [80, 100, 120];
 
@@ -48,6 +52,7 @@ const elements = {
 };
 
 let refreshTimer = null;
+let activeDepthScale = null;
 
 refresh();
 
@@ -74,9 +79,10 @@ async function refresh() {
 
 function render(status) {
   const depth = status.depth?.meters;
-  const depthScale = chooseScale(depth, DEPTH_SCALE_STEPS, 10);
+  activeDepthScale = chooseDepthScale(depth, activeDepthScale);
+  const depthScale = scaleFromMax(activeDepthScale || 10);
   setText(elements.depthValue, formatNumber(depth, 1));
-  setText(elements.depthSource, labelDepthSource(status.depth?.source));
+  setText(elements.depthSource, `${labelDepthSource(status.depth?.source)} - 0-${depthScale.max} m scale`);
   setGaugeScale(elements.depthScale, depthScale);
   rotateGauge(elements.depthNeedle, depth, 0, depthScale.max, GAUGE_MIN_ANGLE, GAUGE_MAX_ANGLE);
   setBand(elements.depthInstrument, depthBand(depth));
@@ -229,10 +235,38 @@ function chooseScale(value, steps, fallbackMax) {
   const number = Number(value);
   const target = Number.isFinite(number) ? Math.max(0, number) * 1.12 : fallbackMax;
   const max = steps.find((candidate) => target <= candidate) || steps[steps.length - 1] || fallbackMax;
+  return scaleFromMax(max);
+}
+
+function scaleFromMax(max) {
   return {
     max,
     labels: [0, max * 0.25, max * 0.5, max * 0.75, max],
   };
+}
+
+function smallestDepthScaleFor(value) {
+  const number = Number(value);
+  if (!Number.isFinite(number)) return 10;
+  const depth = Math.max(0, number);
+  return DEPTH_SCALE_STEPS.find((candidate) => depth <= candidate) || DEPTH_SCALE_STEPS[DEPTH_SCALE_STEPS.length - 1];
+}
+
+function chooseDepthScale(value, currentScale = null) {
+  const number = Number(value);
+  if (!Number.isFinite(number)) return currentScale || 10;
+  const depth = Math.max(0, number);
+  if (!currentScale) return smallestDepthScaleFor(depth);
+  const currentIndex = DEPTH_SCALE_STEPS.indexOf(currentScale);
+  const current = currentIndex >= 0 ? currentScale : smallestDepthScaleFor(depth);
+  const lower = currentIndex > 0 ? DEPTH_SCALE_STEPS[currentIndex - 1] : null;
+  if (depth > current * DEPTH_SCALE_HYSTERESIS.stepUpFactor) {
+    return smallestDepthScaleFor(depth);
+  }
+  if (lower && depth < lower * DEPTH_SCALE_HYSTERESIS.stepDownFactor) {
+    return smallestDepthScaleFor(depth);
+  }
+  return current;
 }
 
 function setGaugeScale(elementsForScale, scale) {

@@ -2,6 +2,12 @@
 
 ## Version 1.2
 
+`v0.5.1` folds the classic-gauge design study into the live app. Depth now uses
+0-10, 0-50, 0-100, and 0-200m scale steps with hysteresis so it does not chatter
+around boundaries; the Wind card has a separate drift readout, purple tide/current
+pointer with arrowhead, compact dark AWS readout, and tide set readout below the
+dial; the Exhaust card no longer repeats "water temperature" under the gauge.
+
 `v0.5.0` refines the Marine Classic visual design. Wind readouts now sit in
 dedicated layout lanes instead of overlaying the dial, small-dial LCDs are less
 dominant, and the instrument cards have deeper layered bezels, subtle panel
@@ -52,7 +58,7 @@ It displays:
 
 ```bash
 cd ~/.signalk
-npm install git+ssh://git@ssh.github.com:443/ajrm-marine-suite/signalk-ajrm-marine-instruments.git#v0.5.0 --omit=dev --no-package-lock
+npm install git+https://github.com/ajrm-marine-suite/signalk-ajrm-marine-instruments.git#v0.5.1 --omit=dev --no-package-lock
 sudo systemctl restart signalk
 ```
 

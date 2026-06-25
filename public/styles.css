@@ -13,6 +13,9 @@
   --caution: #f5b642;
   --danger: #ef3f3f;
   --cyan: #34c8f3;
+  --true-wind: #22c7f2;
+  --apparent-wind: #f6a31a;
+  --tide-current: #9f7bff;
 }
 
 * {
@@ -436,41 +439,41 @@ p {
 .wind-pointer.true {
   width: 7px;
   height: 45%;
-  background: linear-gradient(90deg, #dfffff, #25f4ff 45%, #06717a);
+  background: linear-gradient(90deg, #dfffff, var(--true-wind) 45%, #06717a);
 }
 
 .wind-pointer.true::before {
-  border-bottom-color: #25f4ff;
+  border-bottom-color: var(--true-wind);
 }
 
 .wind-pointer.apparent {
   width: 6px;
   height: 44%;
-  background: linear-gradient(90deg, #fff5cc, #ffad1f 45%, #9a4f00);
+  background: linear-gradient(90deg, #fff5cc, var(--apparent-wind) 45%, #9a4f00);
 }
 
 .wind-pointer.apparent::before {
-  border-bottom-color: #ffad1f;
+  border-bottom-color: var(--apparent-wind);
 }
 
 .wind-pointer.current {
   width: 4px;
   height: 27%;
-  background: linear-gradient(90deg, #ffffff, #d9e4e9);
+  background: linear-gradient(90deg, #f7f3ff, var(--tide-current));
 }
 
 .wind-pointer.current::before {
   border-left-width: 6px;
   border-right-width: 6px;
   border-bottom-width: 13px;
-  border-bottom-color: #f7fbfd;
+  border-bottom-color: var(--tide-current);
 }
 
 .wind-hub {
   display: grid;
   place-content: center;
-  width: 70px;
-  height: 70px;
+  width: 28px;
+  height: 28px;
   color: #f8fbfd;
   font-weight: 950;
   text-align: center;
@@ -529,6 +532,16 @@ p {
 
 .top-left { grid-column: 1; grid-row: 1; text-align: left; }
 .top-right { grid-column: 3; grid-row: 1; text-align: right; }
+.top-centre {
+  grid-column: 2;
+  grid-row: 1;
+  align-self: start;
+  justify-self: center;
+  width: 27%;
+  min-width: 5.1rem;
+  text-align: center;
+  transform: translateY(-6px);
+}
 .bottom-left { grid-column: 1; grid-row: 3; text-align: left; }
 .bottom-right { grid-column: 3; grid-row: 3; text-align: right; }
 
@@ -539,10 +552,24 @@ p {
   justify-self: stretch;
   width: auto;
   min-width: 0;
+  color: var(--tide-current);
+  border-color: rgba(159, 123, 255, 0.34);
   border-top: 2px solid rgba(238, 246, 249, 0.7);
   border-bottom: 0;
   text-align: center;
-  transform: none;
+  transform: translateY(8px);
+}
+
+.drift-readout {
+  grid-column: 2;
+  grid-row: 1;
+  align-self: start;
+  justify-self: center;
+  width: 27%;
+  min-width: 5.1rem;
+  border-top: 0;
+  border-bottom: 2px solid rgba(159, 123, 255, 0.7);
+  transform: translateY(-8px);
 }
 
 .tide-readout strong {
@@ -551,9 +578,9 @@ p {
 }
 
 .aws-lcd {
-  bottom: 17%;
-  min-width: 34%;
-  padding: 3px 7px 5px;
+  bottom: 24%;
+  min-width: 28%;
+  padding: 3px 7px 6px;
   background: #080909;
   color: #f7fbfd;
   border-color: rgba(230, 245, 250, 0.14);
@@ -561,7 +588,9 @@ p {
 }
 
 .aws-lcd .unit {
-  color: #f7fbfd;
+  align-self: end;
+  color: #a9bbc2;
+  transform: translateY(2px);
 }
 
 .lcd {
@@ -755,18 +784,31 @@ p {
 
   .tactical-wind-dial {
     grid-column: 1 / 3;
-    grid-row: 2;
+    grid-row: 3;
     width: min(100%, 260px);
   }
 
   .top-left { grid-column: 1; grid-row: 1; }
   .top-right { grid-column: 2; grid-row: 1; }
-  .bottom-left { grid-column: 1; grid-row: 3; }
-  .bottom-right { grid-column: 2; grid-row: 3; }
+  .bottom-left { grid-column: 1; grid-row: 4; }
+  .bottom-right { grid-column: 2; grid-row: 4; }
+
+  .top-centre {
+    grid-column: 1 / 3;
+    grid-row: 2;
+    width: 48%;
+    transform: none;
+  }
 
   .tide-readout {
     grid-column: 1 / 3;
-    grid-row: 4;
+    grid-row: 5;
+  }
+
+  .drift-readout {
+    grid-row: 2;
+    width: 48%;
+    transform: none;
   }
 
   .bezel {

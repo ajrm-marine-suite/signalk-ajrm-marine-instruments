@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>AJRM Marine Instruments</title>
-    <link rel="stylesheet" href="./styles.css?v=1.2.2" />
+    <link rel="stylesheet" href="./styles.css?v=0.5.1" />
   </head>
   <body>
     <main>
@@ -56,6 +56,10 @@
                 <strong id="apparentWindAngle">--</strong>
                 <span>AWA</span>
               </div>
+              <div class="wind-readout tide-readout drift-readout top-centre">
+                <strong id="tideDrift">--</strong>
+                <span>Drift kt</span>
+              </div>
               <div class="wind-readout bottom-left">
                 <strong id="trueWindSpeed">--</strong>
                 <span>TWS kt</span>
@@ -81,10 +85,7 @@
                 <div id="trueWindNeedle" class="compass-needle true wind-pointer"></div>
                 <div id="apparentWindNeedle" class="compass-needle apparent wind-pointer"></div>
                 <div id="currentSetNeedle" class="compass-needle current wind-pointer"></div>
-                <div class="hub wind-hub">
-                  <span id="tideDrift">--</span>
-                  <small>Drift kt</small>
-                </div>
+                <div class="hub wind-hub"></div>
                 <div class="lcd wind-lcd aws-lcd">
                   <span id="apparentWindSpeed" class="value small">--</span>
                   <span class="unit">AWS kt</span>
@@ -194,11 +195,11 @@
               </div>
             </div>
           </div>
-          <p class="subtext">Water temperature</p>
+          <p class="subtext" aria-hidden="true"></p>
         </article>
       </section>
     </main>
 
-    <script src="./app.js?v=1.2.2"></script>
+    <script src="./app.js?v=0.5.1"></script>
   </body>
 </html>
