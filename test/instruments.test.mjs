@@ -17,9 +17,9 @@ test("cardinalDirection maps degrees to compass labels", () => {
   assert.equal(cardinalDirection(281), "W");
 });
 
-test("signalKAngleToDegrees accepts radians and degree-like values", () => {
+test("signalKAngleToDegrees treats Signal K angle values as radians", () => {
   assert.equal(signalKAngleToDegrees(Math.PI), 180);
-  assert.equal(signalKAngleToDegrees(270), 270);
+  assert.equal(Math.round(signalKAngleToDegrees(270)), 350);
   assert.equal(signalKAngleToDegrees(-Math.PI / 2), 270);
 });
 

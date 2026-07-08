@@ -1,7 +1,6 @@
 "use strict";
 
 const MS_TO_KNOTS = 1.9438444924406048;
-const TWO_PI = Math.PI * 2;
 
 const CARDINALS = [
   "N",
@@ -54,8 +53,7 @@ function round(value, decimals = 1) {
 function signalKAngleToDegrees(value) {
   const number = finiteNumber(value);
   if (number == null) return null;
-  const degrees = Math.abs(number) <= TWO_PI + 0.001 ? (number * 180) / Math.PI : number;
-  return normalizeDegrees(degrees);
+  return normalizeDegrees((number * 180) / Math.PI);
 }
 
 function normalizeDegrees(value) {
@@ -67,7 +65,7 @@ function normalizeDegrees(value) {
 function relativeDegrees(value) {
   const number = finiteNumber(value);
   if (number == null) return null;
-  const degrees = Math.abs(number) <= TWO_PI + 0.001 ? (number * 180) / Math.PI : number;
+  const degrees = (number * 180) / Math.PI;
   let normalized = ((degrees % 360) + 360) % 360;
   if (normalized > 180) normalized -= 360;
   return normalized;
@@ -232,14 +230,14 @@ function deriveTrueWindDirection(app, trueWindAngle) {
   return reference == null ? null : normalizeDegrees(reference + angle);
 }
 
-function relativeDirectionFromVessel(app, trueDirection) {
-  const direction = signalKAngleToDegrees(trueDirection);
-  if (direction == null) return null;
+function relativeDirectionFromVessel(app, trueDirectionDegrees) {
+  const directionDegrees = finiteNumber(trueDirectionDegrees);
+  if (directionDegrees == null) return null;
   const heading = signalKAngleToDegrees(readSelfValue(app, "navigation.headingTrue"));
   const cog = signalKAngleToDegrees(readSelfValue(app, "navigation.courseOverGroundTrue"));
   const reference = heading ?? cog;
   if (reference == null) return null;
-  let relative = ((direction - reference) % 360 + 360) % 360;
+  let relative = ((directionDegrees - reference) % 360 + 360) % 360;
   if (relative > 180) relative -= 360;
   return relative;
 }

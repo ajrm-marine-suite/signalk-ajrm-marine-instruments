@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.5.7
+
+- Treat Signal K angular values as radians consistently instead of guessing
+  radians versus degrees from numeric magnitude.
+
 ## 0.5.5
 
 - Add Signal K AppStore relationship metadata recommending Instrument Alerts
