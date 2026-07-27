@@ -1,6 +1,7 @@
 "use strict";
 
 const MS_TO_KNOTS = 1.9438444924406048;
+const NAVIGATION_REFERENCE_MAX_AGE_MS = 15_000;
 
 const CARDINALS = [
   "N",
@@ -108,6 +109,11 @@ function readSelfValue(app, path) {
 }
 
 function buildInstrumentState(app, options = {}) {
+  const requestedNowMs = Number(options.nowMs);
+  const nowMs = Number.isFinite(requestedNowMs) ? requestedNowMs : Date.now();
+  const navigationReferenceSelection = readNavigationReference(app, nowMs);
+  const navigationReference = navigationReferenceSelection.value;
+  const navigationReferencePresent = navigationReferenceSelection.present;
   const depthPath = depthSignalKPath(options.depthSource);
   const depthMeters = readSelfValue(app, depthPath);
   const apparentWindSpeed = readSelfValue(app, "environment.wind.speedApparent");
@@ -116,12 +122,33 @@ function buildInstrumentState(app, options = {}) {
   const trueWindAngle = readSelfValue(app, "environment.wind.angleTrue");
   const trueWindDirection =
     signalKAngleToDegrees(readSelfValue(app, "environment.wind.directionTrue")) ??
-    deriveTrueWindDirection(app, trueWindAngle);
-  const currentDrift = readSelfValue(app, "environment.current.drift");
-  const currentSetTrue = signalKAngleToDegrees(readSelfValue(app, "environment.current.setTrue"));
-  const position = readSelfRaw(app, "navigation.position");
-  const cog = signalKAngleToDegrees(readSelfValue(app, "navigation.courseOverGroundTrue"));
-  const sog = readSelfValue(app, "navigation.speedOverGround");
+    deriveTrueWindDirection(
+      app,
+      trueWindAngle,
+      navigationReference,
+      navigationReferencePresent,
+    );
+  const qualifiedCurrent = independentCurrent(navigationReference?.current);
+  const currentDrift = qualifiedCurrent?.drift ?? null;
+  const currentSetTrue = signalKAngleToDegrees(qualifiedCurrent?.setTrue);
+  const position = navigationReferencePresent
+    ? navigationReference?.position?.value
+    : readSelfRaw(app, "navigation.position");
+  const cog = signalKAngleToDegrees(
+    navigationReferencePresent
+      ? navigationReference?.groundTrack?.courseTrue?.value
+      : readSelfValue(app, "navigation.courseOverGroundTrue"),
+  );
+  const sog = navigationReferencePresent
+    ? finiteNumber(navigationReference?.groundTrack?.speedOverGround?.value)
+    : readSelfValue(app, "navigation.speedOverGround");
+  const bowHeadingTrue = finiteNumber(
+    navigationReferencePresent
+      ? navigationReference?.bowHeadingTrue?.value
+      : readSelfValue(app, "navigation.headingTrue"),
+  );
+  const clockReference = navigationReference?.clockReference;
+  const gnssQuality = navigationReference?.groundTrack?.quality;
   const exhaustWaterTemperature = readSelfValue(
     app,
     options.exhaustWaterTemperaturePath ||
@@ -134,7 +161,7 @@ function buildInstrumentState(app, options = {}) {
     ok: true,
     plugin: "signalk-ajrm-marine-instruments",
     version: options.version || "0.0.0",
-    timestamp: new Date().toISOString(),
+    timestamp: new Date(nowMs).toISOString(),
     paths: {
       depth: depthPath,
       exhaustWaterTemperature:
@@ -166,8 +193,19 @@ function buildInstrumentState(app, options = {}) {
       driftKnots: round(knotsFromMetersPerSecond(currentDrift), 1),
       driftMetersPerSecond: round(currentDrift, 2),
       setTrueDegrees: round(currentSetTrue, 0),
-      setRelativeDegrees: round(relativeDirectionFromVessel(app, currentSetTrue), 0),
+      setRelativeDegrees: round(
+        relativeDirectionFromVessel(
+          app,
+          currentSetTrue,
+          navigationReference,
+          navigationReferencePresent,
+        ),
+        0,
+      ),
       setCardinal: cardinalDirection(currentSetTrue),
+      origin: qualifiedCurrent?.origin || null,
+      source: qualifiedCurrent?.source || null,
+      gpsDependent: qualifiedCurrent?.gpsDependent ?? null,
     },
     gps: {
       latitude: round(position?.latitude, 6),
@@ -180,17 +218,48 @@ function buildInstrumentState(app, options = {}) {
         ]),
         1,
       ),
-      horizontalDilution: round(readSelfValue(app, "navigation.gnss.horizontalDilution"), 1),
+      horizontalDilution: round(
+        navigationReferencePresent
+          ? finiteNumber(gnssQuality?.horizontalDilution)
+          : readSelfValue(app, "navigation.gnss.horizontalDilution"),
+        1,
+      ),
       positionDilution: round(readSelfValue(app, "navigation.gnss.positionDilution"), 1),
-      satellites: round(readSelfValue(app, "navigation.gnss.satellites"), 0),
-      type: stringValue(readSelfRaw(app, "navigation.gnss.type")),
-      methodQuality: stringValue(readSelfRaw(app, "navigation.gnss.methodQuality")),
-      integrity: stringValue(readSelfRaw(app, "navigation.gnss.integrity")),
+      satellites: round(
+        navigationReferencePresent
+          ? finiteNumber(gnssQuality?.satellites)
+          : readSelfValue(app, "navigation.gnss.satellites"),
+        0,
+      ),
+      type: navigationReferencePresent
+        ? stringValue(gnssQuality?.type)
+        : stringValue(readSelfRaw(app, "navigation.gnss.type")),
+      methodQuality: navigationReferencePresent
+        ? stringValue(gnssQuality?.methodQuality)
+        : stringValue(readSelfRaw(app, "navigation.gnss.methodQuality")),
+      integrity: navigationReferencePresent
+        ? stringValue(gnssQuality?.integrity)
+        : stringValue(readSelfRaw(app, "navigation.gnss.integrity")),
+      qualitySource: navigationReferencePresent
+        ? stringValue(gnssQuality?.source)
+        : "",
+      qualityEvidence: navigationReferencePresent
+        ? stringValue(gnssQuality?.evidence)
+        : "",
     },
     navigation: {
       cogDegrees: round(cog, 0),
       cogCardinal: cardinalDirection(cog),
       sogKnots: round(knotsFromMetersPerSecond(sog), 1),
+      headingTrueDegrees: round(signalKAngleToDegrees(bowHeadingTrue), 0),
+      referenceKind: clockReference?.kind || null,
+      referenceDegreesTrue: round(
+        signalKAngleToDegrees(clockReference?.value),
+        0,
+      ),
+      referenceSource: clockReference?.source || null,
+      referenceMethod: clockReference?.method || null,
+      referenceGpsDependent: clockReference?.gpsDependent ?? null,
     },
     exhaustWater: {
       temperatureCelsius: round(celsiusFromKelvin(exhaustWaterTemperature), 1),
@@ -221,25 +290,81 @@ function depthSignalKPath(source) {
   return "environment.depth.belowKeel";
 }
 
-function deriveTrueWindDirection(app, trueWindAngle) {
+function deriveTrueWindDirection(
+  app,
+  trueWindAngle,
+  navigationReference,
+  navigationReferencePresent,
+) {
   const angle = relativeDegrees(trueWindAngle);
   if (angle == null) return null;
-  const heading = signalKAngleToDegrees(readSelfValue(app, "navigation.headingTrue"));
-  const cog = signalKAngleToDegrees(readSelfValue(app, "navigation.courseOverGroundTrue"));
-  const reference = heading ?? cog;
-  return reference == null ? null : normalizeDegrees(reference + angle);
+  const heading = signalKAngleToDegrees(
+    navigationReferencePresent
+      ? navigationReference?.bowHeadingTrue?.value
+      : readSelfValue(app, "navigation.headingTrue"),
+  );
+  return heading == null ? null : normalizeDegrees(heading + angle);
 }
 
-function relativeDirectionFromVessel(app, trueDirectionDegrees) {
+function relativeDirectionFromVessel(
+  app,
+  trueDirectionDegrees,
+  navigationReference,
+  navigationReferencePresent,
+) {
   const directionDegrees = finiteNumber(trueDirectionDegrees);
   if (directionDegrees == null) return null;
-  const heading = signalKAngleToDegrees(readSelfValue(app, "navigation.headingTrue"));
-  const cog = signalKAngleToDegrees(readSelfValue(app, "navigation.courseOverGroundTrue"));
-  const reference = heading ?? cog;
-  if (reference == null) return null;
-  let relative = ((directionDegrees - reference) % 360 + 360) % 360;
+  const heading = signalKAngleToDegrees(
+    navigationReferencePresent
+      ? navigationReference?.bowHeadingTrue?.value
+      : readSelfValue(app, "navigation.headingTrue"),
+  );
+  if (heading == null) return null;
+  let relative = ((directionDegrees - heading) % 360 + 360) % 360;
   if (relative > 180) relative -= 360;
   return relative;
+}
+
+function readNavigationReference(app, nowMs) {
+  if (typeof app?.getSelfPath !== "function") {
+    return { present: false, value: null };
+  }
+  const entry = app.getSelfPath("plugins.ajrmMarineNavigationReference.state");
+  if (entry === null || entry === undefined) {
+    return { present: false, value: null };
+  }
+  const value = unwrapSignalKValue(entry);
+  if (
+    !value ||
+    typeof value !== "object" ||
+    value.contract !== "ajrm-marine-navigation-reference" ||
+    value.schemaVersion !== 1
+  ) {
+    return { present: true, value: null };
+  }
+  const updatedAtMs = Date.parse(value.updatedAt);
+  if (
+    !Number.isFinite(updatedAtMs) ||
+    Math.abs(nowMs - updatedAtMs) > NAVIGATION_REFERENCE_MAX_AGE_MS
+  ) {
+    return { present: true, value: null };
+  }
+  return { present: true, value };
+}
+
+function independentCurrent(value) {
+  if (
+    !value ||
+    typeof value !== "object" ||
+    finiteNumber(value.setTrue) == null ||
+    finiteNumber(value.drift) == null ||
+    value.gpsDependent !== false ||
+    !String(value.source || "").trim() ||
+    !String(value.origin || "").trim()
+  ) {
+    return null;
+  }
+  return value;
 }
 
 module.exports = {

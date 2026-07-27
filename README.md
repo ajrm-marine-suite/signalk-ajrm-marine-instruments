@@ -52,8 +52,9 @@ It displays:
 - Depth
 - Apparent wind speed and angle
 - True wind speed, Beaufort force, true direction in degrees, and cardinal direction
-- Tide/current drift and set when `environment.current.drift` and
-  `environment.current.setTrue` are available
+- Qualified independent current drift and set from AJRM Marine Navigation
+  Reference; arbitrary or GPS-derived `environment.current.*` values are not
+  presented as trusted tide/current
 - COG and SOG
 - GPS latitude, longitude, accuracy, satellites, and dilution of precision
 - Exhaust water temperature
@@ -62,7 +63,7 @@ It displays:
 
 ```bash
 cd ~/.signalk
-npm install git+https://github.com/ajrm-marine-suite/signalk-ajrm-marine-instruments.git#v0.5.6 --omit=dev --no-package-lock
+npm install git+https://github.com/ajrm-marine-suite/signalk-ajrm-marine-instruments.git#v0.6.1 --omit=dev --no-package-lock
 sudo systemctl restart signalk
 ```
 
@@ -80,6 +81,19 @@ Configure spoken Information, Warning, and Danger rules in **AJRM Marine Instrum
 
 Signal K uses SI units internally. AJRM Marine Instruments converts speed to knots, angles to degrees, and temperature to Celsius for display.
 
+Heading-dependent values use AJRM Marine Navigation Reference when available.
+The status projection exposes whether the reference is a bow compass or a
+moving-COG proxy, together with its source and method. Raw magnetic heading is
+never displayed or used as though it were true heading.
+If the provider path exists with a malformed or unsupported contract, or its
+`updatedAt` is missing, invalid, or more than 15 seconds old, provider-owned
+navigation and GNSS values stay unavailable rather than being silently mixed
+with raw paths. Raw fallback is used only when the provider path is absent.
+
+When several GNSS receivers are present, displayed HDOP, satellite count, fix
+type, method quality, and integrity come from the same provider-selected
+ground-track source rather than Signal K's aggregate current values.
+
 AJRM Marine Instruments is authored and maintained by Anthony McDonald, with assistance from William McAusland. It builds on the Signal K project and the work of Signal K plugin authors.
 
 
@@ -93,4 +107,3 @@ Development assistance: OpenAI Codex helped with code generation, refactoring, a
 This software is licensed under the GNU Affero General Public License v3.0 or later (AGPL-3.0-or-later). You may use, study, share, and modify it under that licence. If you modify it and make it available to users over a network, the corresponding source code must also be made available under the AGPL.
 
 Commercial licensing is available by arrangement for organisations that want different terms.
-

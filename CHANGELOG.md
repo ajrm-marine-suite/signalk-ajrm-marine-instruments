@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.6.1
+
+- Use AJRM Marine Navigation Reference as the authoritative source for coherent
+  GNSS quality, track, heading, current, leeway, and provenance.
+- Keep GNSS quality fields on the selected GNSS source and expose
+  heading-dependent values only when the provider says a real heading exists.
+- Distinguish independent current from GPS-dependent ground-minus-water
+  residuals rather than presenting both as measured tide/current.
+- Withhold provider-owned navigation and GNSS fields for stale states or
+  malformed and unsupported provider contracts; accept `updatedAt` only within
+  15 seconds and use raw fallback only when the provider path is absent.
+
 ## 0.5.7
 
 - Treat Signal K angular values as radians consistently instead of guessing
