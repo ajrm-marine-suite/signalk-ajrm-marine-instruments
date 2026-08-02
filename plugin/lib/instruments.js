@@ -280,6 +280,7 @@ function buildInstrumentState(app, options = {}) {
       referenceGpsDependent: clockReference?.gpsDependent ?? null,
     },
     rudder: {
+      angleRadians: pilotEngaged ? rudderAngle : null,
       angleDegrees: pilotEngaged ? round(relativeDegrees(rudderAngle), 1) : null,
       autopilotState: autopilotState || null,
       available: pilotEngaged && rudderAngle != null,

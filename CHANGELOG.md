@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- Publish `plugins.ajrmMarineInstruments.pilotHelmAngle` in radians while the
+  autopilot is explicitly engaged, and clear it outside engaged modes so alarm
+  consumers do not see TP32 standby placeholders or stale helm values.
+
 ## 0.6.3
 
 - Present TP32 steering position as a pilot-helm proxy only while Signal K

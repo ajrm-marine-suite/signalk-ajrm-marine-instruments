@@ -161,6 +161,7 @@ test("buildInstrumentState converts common Signal K self values", () => {
   assert.equal(state.engineRoom.temperatureCelsius, 16.6);
   assert.equal(state.water.temperatureCelsius, 12);
   assert.equal(state.rudder.angleDegrees, -15);
+  assert.equal(state.rudder.angleRadians, -Math.PI / 12);
   assert.equal(state.rudder.autopilotState, "heading");
   assert.equal(state.rudder.available, true);
   assert.equal(state.rudder.measurementKind, "pilot-helm-position-proxy");
@@ -176,6 +177,7 @@ test("withholds TP32 rudder position while the autopilot is in standby", () => {
   const state = buildInstrumentState({ getSelfPath: (path) => values[path] });
 
   assert.equal(state.rudder.angleDegrees, null);
+  assert.equal(state.rudder.angleRadians, null);
   assert.equal(state.rudder.autopilotState, "standby");
   assert.equal(state.rudder.available, false);
   assert.equal(state.rudder.measurementKind, null);

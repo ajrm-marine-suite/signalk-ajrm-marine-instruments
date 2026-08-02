@@ -4,10 +4,13 @@ const packageInfo = require("../package.json");
 const { buildInstrumentState } = require("./lib/instruments");
 
 const PLUGIN_ID = "signalk-ajrm-marine-instruments";
+const PILOT_HELM_ANGLE_PATH = "plugins.ajrmMarineInstruments.pilotHelmAngle";
 
 module.exports = function ajrmMarineInstruments(app) {
   const plugin = {};
   let options = normalizeOptions({});
+  let unsubscribes = [];
+  let lastPublishedPilotHelmAngle = Symbol("not-published");
 
   plugin.id = PLUGIN_ID;
   plugin.name = "AJRM Marine Instruments";
@@ -39,10 +42,15 @@ module.exports = function ajrmMarineInstruments(app) {
 
   plugin.start = (pluginOptions = {}) => {
     options = normalizeOptions(pluginOptions);
+    subscribeToPilotHelmInputs();
+    publishPilotHelmAngle();
     app.setPluginStatus(`Started v${packageInfo.version}`);
   };
 
-  plugin.stop = () => {};
+  plugin.stop = () => {
+    for (const unsubscribe of unsubscribes.splice(0)) unsubscribe();
+    publishPilotHelmValue(null);
+  };
 
   plugin.registerWithRouter = function registerWithRouter(router) {
     router.get("/status", (_req, res) => {
@@ -62,6 +70,46 @@ module.exports = function ajrmMarineInstruments(app) {
   };
 
   return plugin;
+
+  function subscribeToPilotHelmInputs() {
+    if (!app.subscriptionmanager?.subscribe) return;
+    app.subscriptionmanager.subscribe(
+      {
+        context: "vessels.self",
+        subscribe: [
+          { path: "steering.rudderAngle", policy: "instant", format: "delta" },
+          { path: "steering.autopilot.state", policy: "instant", format: "delta" },
+        ],
+      },
+      unsubscribes,
+      (error) => app.error?.(`[${PLUGIN_ID}] subscription error: ${error}`),
+      () => publishPilotHelmAngle(),
+    );
+  }
+
+  function publishPilotHelmAngle() {
+    try {
+      const state = buildInstrumentState(app, { ...options, version: packageInfo.version });
+      publishPilotHelmValue(state.rudder?.angleRadians ?? null);
+    } catch (error) {
+      app.error?.(`[${PLUGIN_ID}] pilot helm projection error: ${error.stack || error.message}`);
+      publishPilotHelmValue(null);
+    }
+  }
+
+  function publishPilotHelmValue(value) {
+    if (Object.is(value, lastPublishedPilotHelmAngle)) return;
+    lastPublishedPilotHelmAngle = value;
+    app.handleMessage?.(PLUGIN_ID, {
+      context: "vessels.self",
+      updates: [
+        {
+          timestamp: new Date().toISOString(),
+          values: [{ path: PILOT_HELM_ANGLE_PATH, value }],
+        },
+      ],
+    });
+  }
 
   function normalizeOptions(value) {
     return {
@@ -84,3 +132,5 @@ module.exports = function ajrmMarineInstruments(app) {
   }
 
 };
+
+module.exports.PILOT_HELM_ANGLE_PATH = PILOT_HELM_ANGLE_PATH;

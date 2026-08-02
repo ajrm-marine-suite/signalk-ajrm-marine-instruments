@@ -64,6 +64,18 @@ It displays:
 - Exhaust water temperature
 - Sea-water temperature
 
+For downstream alarms, the plugin publishes the gated pilot helm position at:
+
+```text
+plugins.ajrmMarineInstruments.pilotHelmAngle
+```
+
+The value uses Signal K radians. It is present only while
+`steering.autopilot.state` explicitly reports `auto`, `heading`, `wind`, or
+`route`; the path is cleared to `null` in standby or when the mode is unknown.
+In AJRM Marine Instrument Alerts, select **Radians to degrees** if thresholds
+are to be entered and spoken in degrees.
+
 ## Install On The Pi
 
 ```bash
