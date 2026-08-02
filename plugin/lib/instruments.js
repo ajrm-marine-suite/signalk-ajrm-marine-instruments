@@ -2,6 +2,7 @@
 
 const MS_TO_KNOTS = 1.9438444924406048;
 const NAVIGATION_REFERENCE_MAX_AGE_MS = 15_000;
+const ENGAGED_AUTOPILOT_STATES = new Set(["auto", "heading", "wind", "route"]);
 
 const CARDINALS = [
   "N",
@@ -108,6 +109,14 @@ function readSelfValue(app, path) {
   return finiteNumber(readSelfRaw(app, path));
 }
 
+function normalizeAutopilotState(value) {
+  return stringValue(value).trim().toLowerCase();
+}
+
+function isAutopilotEngagedState(value) {
+  return ENGAGED_AUTOPILOT_STATES.has(normalizeAutopilotState(value));
+}
+
 function buildInstrumentState(app, options = {}) {
   const requestedNowMs = Number(options.nowMs);
   const nowMs = Number.isFinite(requestedNowMs) ? requestedNowMs : Date.now();
@@ -156,6 +165,10 @@ function buildInstrumentState(app, options = {}) {
       "environment.inside.engineRoom.temperature",
   );
   const rudderAngle = readSelfValue(app, "steering.rudderAngle");
+  const autopilotState = normalizeAutopilotState(
+    readSelfRaw(app, "steering.autopilot.state"),
+  );
+  const pilotEngaged = isAutopilotEngagedState(autopilotState);
   const waterTemperature = readSelfValue(app, "environment.water.temperature");
   const beaufort = beaufortFromMetersPerSecond(trueWindSpeed);
 
@@ -171,6 +184,7 @@ function buildInstrumentState(app, options = {}) {
         options.engineRoomTemperaturePath ||
         "environment.inside.engineRoom.temperature",
       rudderAngle: "steering.rudderAngle",
+      autopilotState: "steering.autopilot.state",
       waterTemperature: "environment.water.temperature",
     },
     depth: {
@@ -266,7 +280,10 @@ function buildInstrumentState(app, options = {}) {
       referenceGpsDependent: clockReference?.gpsDependent ?? null,
     },
     rudder: {
-      angleDegrees: round(relativeDegrees(rudderAngle), 1),
+      angleDegrees: pilotEngaged ? round(relativeDegrees(rudderAngle), 1) : null,
+      autopilotState: autopilotState || null,
+      available: pilotEngaged && rudderAngle != null,
+      measurementKind: pilotEngaged ? "pilot-helm-position-proxy" : null,
     },
     water: {
       temperatureCelsius: round(celsiusFromKelvin(waterTemperature), 1),
@@ -384,6 +401,7 @@ module.exports = {
   cardinalDirection,
   celsiusFromKelvin,
   depthSignalKPath,
+  isAutopilotEngagedState,
   knotsFromMetersPerSecond,
   relativeDegrees,
   signalKAngleToDegrees,

@@ -148,7 +148,7 @@ function render(status) {
 
   const rudderAngle = status.rudder?.angleDegrees;
   renderClassicGauge(elements.rudderGauge, {
-    label: "Rudder",
+    label: "Pilot",
     units: "degrees",
     measurement: formatRudderAngle(rudderAngle),
     min: -45,
@@ -163,7 +163,7 @@ function render(status) {
       { from: 5, to: 45, color: "#27d36b" },
     ],
   });
-  setText(elements.rudderDetail, rudderAngle == null ? "No rudder data" : formatRudderAngle(rudderAngle));
+  setText(elements.rudderDetail, formatPilotHelmDetail(status.rudder));
   setBand(elements.rudderInstrument, rudderAngle == null ? "offline" : "safe");
 
   const gps = status.gps || {};
@@ -419,6 +419,19 @@ function formatRudderAngle(degrees) {
   if (!Number.isFinite(number)) return "--";
   if (Math.abs(number) < 0.05) return "Amidships";
   return `${Math.abs(number).toFixed(1)}° ${number < 0 ? "port" : "starboard"}`;
+}
+
+function formatPilotHelmDetail(rudder) {
+  if (rudder?.angleDegrees != null) {
+    return `${formatRudderAngle(rudder.angleDegrees)} · ${formatAutopilotState(rudder.autopilotState)} mode`;
+  }
+  if (rudder?.autopilotState === "standby") return "Unavailable while pilot is in standby";
+  return "Requires an explicit engaged autopilot mode";
+}
+
+function formatAutopilotState(value) {
+  const text = String(value || "pilot");
+  return text.charAt(0).toUpperCase() + text.slice(1);
 }
 
 function formatCoordinate(value, positiveSuffix, negativeSuffix) {

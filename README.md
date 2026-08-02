@@ -56,7 +56,10 @@ It displays:
   Reference; arbitrary or GPS-derived `environment.current.*` values are not
   presented as trusted tide/current
 - COG and SOG
-- Rudder angle on a signed port/amidships/starboard dial
+- TP32 pilot helm-position proxy on a signed port/amidships/starboard dial,
+  shown only when Signal K explicitly reports an engaged autopilot mode. It is
+  not presented as a calibrated physical rudder measurement, and standby or
+  unknown-state values are withheld.
 - GPS latitude, longitude, accuracy, satellites, and dilution of precision
 - Exhaust water temperature
 - Sea-water temperature

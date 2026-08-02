@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+- Present TP32 steering position as a pilot-helm proxy only while Signal K
+  explicitly reports an engaged autopilot mode; suppress standby and unknown
+  values so the unit's alternating placeholder positions are not mistaken for
+  physical rudder movement.
+
 ## 0.6.2
 
 - Add signed port/amidships/starboard rudder-angle and sea-water temperature

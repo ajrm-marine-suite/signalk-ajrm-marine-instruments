@@ -7,6 +7,7 @@ import {
   cardinalDirection,
   celsiusFromKelvin,
   depthSignalKPath,
+  isAutopilotEngagedState,
   signalKAngleToDegrees,
 } from "../plugin/lib/instruments.js";
 
@@ -43,6 +44,15 @@ test("depthSignalKPath chooses the configured source", () => {
   assert.equal(depthSignalKPath("unknown"), "environment.depth.belowKeel");
 });
 
+test("recognises only explicit engaged autopilot states", () => {
+  for (const state of ["auto", "heading", "wind", "route", " HEADING "]) {
+    assert.equal(isAutopilotEngagedState(state), true);
+  }
+  for (const state of ["standby", "unknown", "", null]) {
+    assert.equal(isAutopilotEngagedState(state), false);
+  }
+});
+
 test("buildInstrumentState converts common Signal K self values", () => {
   const values = {
     "environment.depth.belowKeel": { value: 3.53 },
@@ -65,6 +75,7 @@ test("buildInstrumentState converts common Signal K self values", () => {
     "environment.inside.engineRoom.temperature": { value: 289.75 },
     "environment.water.temperature": { value: 285.15 },
     "steering.rudderAngle": { value: -Math.PI / 12 },
+    "steering.autopilot.state": { value: "heading" },
     "plugins.ajrmMarineNavigationReference.state": {
       value: {
         contract: "ajrm-marine-navigation-reference",
@@ -150,8 +161,24 @@ test("buildInstrumentState converts common Signal K self values", () => {
   assert.equal(state.engineRoom.temperatureCelsius, 16.6);
   assert.equal(state.water.temperatureCelsius, 12);
   assert.equal(state.rudder.angleDegrees, -15);
+  assert.equal(state.rudder.autopilotState, "heading");
+  assert.equal(state.rudder.available, true);
+  assert.equal(state.rudder.measurementKind, "pilot-helm-position-proxy");
   assert.equal(state.paths.waterTemperature, "environment.water.temperature");
   assert.equal(state.paths.rudderAngle, "steering.rudderAngle");
+});
+
+test("withholds TP32 rudder position while the autopilot is in standby", () => {
+  const values = {
+    "steering.rudderAngle": { value: Math.PI / 18 },
+    "steering.autopilot.state": { value: "standby" },
+  };
+  const state = buildInstrumentState({ getSelfPath: (path) => values[path] });
+
+  assert.equal(state.rudder.angleDegrees, null);
+  assert.equal(state.rudder.autopilotState, "standby");
+  assert.equal(state.rudder.available, false);
+  assert.equal(state.rudder.measurementKind, null);
 });
 
 test("does not present unqualified Signal K set and drift as current", () => {
