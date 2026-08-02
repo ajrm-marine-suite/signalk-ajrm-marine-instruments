@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.6.4
 
 - Publish `plugins.ajrmMarineInstruments.pilotHelmAngle` in radians while the
   autopilot is explicitly engaged, and clear it outside engaged modes so alarm

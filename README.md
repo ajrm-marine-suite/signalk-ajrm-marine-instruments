@@ -80,7 +80,7 @@ are to be entered and spoken in degrees.
 
 ```bash
 cd ~/.signalk
-npm install git+https://github.com/ajrm-marine-suite/signalk-ajrm-marine-instruments.git#v0.6.3 --omit=dev --no-package-lock
+npm install git+https://github.com/ajrm-marine-suite/signalk-ajrm-marine-instruments.git#v0.6.4 --omit=dev --no-package-lock
 sudo systemctl restart signalk
 ```
 
