@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.6.3
 
 - Present TP32 steering position as a pilot-helm proxy only while Signal K
   explicitly reports an engaged autopilot mode; suppress standby and unknown

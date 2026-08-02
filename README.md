@@ -68,7 +68,7 @@ It displays:
 
 ```bash
 cd ~/.signalk
-npm install git+https://github.com/ajrm-marine-suite/signalk-ajrm-marine-instruments.git#v0.6.2 --omit=dev --no-package-lock
+npm install git+https://github.com/ajrm-marine-suite/signalk-ajrm-marine-instruments.git#v0.6.3 --omit=dev --no-package-lock
 sudo systemctl restart signalk
 ```
 
