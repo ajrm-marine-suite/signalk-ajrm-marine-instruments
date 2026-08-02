@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.6.2
+
+- Add signed port/amidships/starboard rudder-angle and sea-water temperature
+  instruments using the standard Signal K paths.
+
 ## 0.6.1
 
 - Use AJRM Marine Navigation Reference as the authoritative source for coherent

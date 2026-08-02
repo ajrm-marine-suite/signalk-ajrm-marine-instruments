@@ -28,6 +28,9 @@ const elements = {
   sogGauge: document.getElementById("sogGauge"),
   cogInstrument: document.getElementById("cogInstrument"),
   cogGauge: document.getElementById("cogGauge"),
+  rudderInstrument: document.getElementById("rudderInstrument"),
+  rudderGauge: document.getElementById("rudderGauge"),
+  rudderDetail: document.getElementById("rudderDetail"),
   gpsInstrument: document.getElementById("gpsInstrument"),
   gpsFixLabel: document.getElementById("gpsFixLabel"),
   gpsAccuracy: document.getElementById("gpsAccuracy"),
@@ -37,6 +40,8 @@ const elements = {
   gpsDilution: document.getElementById("gpsDilution"),
   temperatureInstrument: document.getElementById("temperatureInstrument"),
   temperatureGauge: document.getElementById("temperatureGauge"),
+  waterTemperatureInstrument: document.getElementById("waterTemperatureInstrument"),
+  waterTemperatureGauge: document.getElementById("waterTemperatureGauge"),
 };
 
 let refreshTimer = null;
@@ -141,6 +146,26 @@ function render(status) {
   });
   setBand(elements.cogInstrument, nav.cogDegrees == null ? "offline" : "safe");
 
+  const rudderAngle = status.rudder?.angleDegrees;
+  renderClassicGauge(elements.rudderGauge, {
+    label: "Rudder",
+    units: "degrees",
+    measurement: formatRudderAngle(rudderAngle),
+    min: -45,
+    max: 45,
+    value: rudderAngle == null ? undefined : rudderAngle,
+    major: 15,
+    minor: 5,
+    decimals: 1,
+    sectors: [
+      { from: -45, to: -5, color: "#ef3f3f" },
+      { from: -5, to: 5, color: "#34c8f3" },
+      { from: 5, to: 45, color: "#27d36b" },
+    ],
+  });
+  setText(elements.rudderDetail, rudderAngle == null ? "No rudder data" : formatRudderAngle(rudderAngle));
+  setBand(elements.rudderInstrument, rudderAngle == null ? "offline" : "safe");
+
   const gps = status.gps || {};
   const hasPosition = Number.isFinite(Number(gps.latitude)) && Number.isFinite(Number(gps.longitude));
   setText(elements.gpsFixLabel, gps.methodQuality || gps.type || (hasPosition ? "GPS fix" : "No fix"));
@@ -167,6 +192,19 @@ function render(status) {
     ].filter((sector) => sector.to > sector.from),
   });
   setBand(elements.temperatureInstrument, temperatureBand(temp));
+
+  const waterTemperature = status.water?.temperatureCelsius;
+  renderClassicGauge(elements.waterTemperatureGauge, {
+    label: "Water",
+    units: "°C",
+    min: -5,
+    max: 35,
+    value: waterTemperature == null ? undefined : waterTemperature,
+    major: 10,
+    minor: 5,
+    sectors: [{ from: -5, to: 35, color: "#34c8f3" }],
+  });
+  setBand(elements.waterTemperatureInstrument, waterTemperature == null ? "offline" : "safe");
 }
 
 function polar(cx, cy, radius, angleDeg) {
@@ -373,6 +411,14 @@ function formatRelativeAngle(degrees) {
   if (!Number.isFinite(number)) return "--";
   const side = number < 0 ? "P" : "S";
   return `${String(Math.round(Math.abs(number))).padStart(3, "0")}°${side}`;
+}
+
+function formatRudderAngle(degrees) {
+  if (degrees == null || degrees === "") return "--";
+  const number = Number(degrees);
+  if (!Number.isFinite(number)) return "--";
+  if (Math.abs(number) < 0.05) return "Amidships";
+  return `${Math.abs(number).toFixed(1)}° ${number < 0 ? "port" : "starboard"}`;
 }
 
 function formatCoordinate(value, positiveSuffix, negativeSuffix) {

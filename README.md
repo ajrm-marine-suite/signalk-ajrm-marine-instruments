@@ -56,14 +56,16 @@ It displays:
   Reference; arbitrary or GPS-derived `environment.current.*` values are not
   presented as trusted tide/current
 - COG and SOG
+- Rudder angle on a signed port/amidships/starboard dial
 - GPS latitude, longitude, accuracy, satellites, and dilution of precision
 - Exhaust water temperature
+- Sea-water temperature
 
 ## Install On The Pi
 
 ```bash
 cd ~/.signalk
-npm install git+https://github.com/ajrm-marine-suite/signalk-ajrm-marine-instruments.git#v0.6.1 --omit=dev --no-package-lock
+npm install git+https://github.com/ajrm-marine-suite/signalk-ajrm-marine-instruments.git#v0.6.2 --omit=dev --no-package-lock
 sudo systemctl restart signalk
 ```
 

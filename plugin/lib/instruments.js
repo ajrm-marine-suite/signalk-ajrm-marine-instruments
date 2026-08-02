@@ -155,6 +155,8 @@ function buildInstrumentState(app, options = {}) {
       options.engineRoomTemperaturePath ||
       "environment.inside.engineRoom.temperature",
   );
+  const rudderAngle = readSelfValue(app, "steering.rudderAngle");
+  const waterTemperature = readSelfValue(app, "environment.water.temperature");
   const beaufort = beaufortFromMetersPerSecond(trueWindSpeed);
 
   return {
@@ -168,6 +170,8 @@ function buildInstrumentState(app, options = {}) {
         options.exhaustWaterTemperaturePath ||
         options.engineRoomTemperaturePath ||
         "environment.inside.engineRoom.temperature",
+      rudderAngle: "steering.rudderAngle",
+      waterTemperature: "environment.water.temperature",
     },
     depth: {
       meters: round(depthMeters, 2),
@@ -260,6 +264,12 @@ function buildInstrumentState(app, options = {}) {
       referenceSource: clockReference?.source || null,
       referenceMethod: clockReference?.method || null,
       referenceGpsDependent: clockReference?.gpsDependent ?? null,
+    },
+    rudder: {
+      angleDegrees: round(relativeDegrees(rudderAngle), 1),
+    },
+    water: {
+      temperatureCelsius: round(celsiusFromKelvin(waterTemperature), 1),
     },
     exhaustWater: {
       temperatureCelsius: round(celsiusFromKelvin(exhaustWaterTemperature), 1),

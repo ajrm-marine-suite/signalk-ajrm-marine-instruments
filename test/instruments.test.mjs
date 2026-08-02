@@ -63,6 +63,8 @@ test("buildInstrumentState converts common Signal K self values", () => {
     "navigation.gnss.type": { value: "GPS" },
     "navigation.gnss.methodQuality": { value: "GNSS fix" },
     "environment.inside.engineRoom.temperature": { value: 289.75 },
+    "environment.water.temperature": { value: 285.15 },
+    "steering.rudderAngle": { value: -Math.PI / 12 },
     "plugins.ajrmMarineNavigationReference.state": {
       value: {
         contract: "ajrm-marine-navigation-reference",
@@ -146,6 +148,10 @@ test("buildInstrumentState converts common Signal K self values", () => {
   assert.equal(state.current.gpsDependent, false);
   assert.equal(state.exhaustWater.temperatureCelsius, 16.6);
   assert.equal(state.engineRoom.temperatureCelsius, 16.6);
+  assert.equal(state.water.temperatureCelsius, 12);
+  assert.equal(state.rudder.angleDegrees, -15);
+  assert.equal(state.paths.waterTemperature, "environment.water.temperature");
+  assert.equal(state.paths.rudderAngle, "steering.rudderAngle");
 });
 
 test("does not present unqualified Signal K set and drift as current", () => {

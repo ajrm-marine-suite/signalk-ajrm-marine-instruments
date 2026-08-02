@@ -19,6 +19,8 @@ test("webapp uses compact marine classic hybrid instruments", () => {
   assert.match(html, /id="sogGauge"/);
   assert.match(html, /id="cogGauge"/);
   assert.match(html, /id="temperatureGauge"/);
+  assert.match(html, /id="rudderGauge"/);
+  assert.match(html, /id="waterTemperatureGauge"/);
   assert.doesNotMatch(html, /class="softkeys"/);
   assert.doesNotMatch(html, /Status<\/div>/);
   assert.doesNotMatch(html, /id="updatedAt"/);
@@ -51,6 +53,9 @@ test("webapp uses compact marine classic hybrid instruments", () => {
   assert.match(app, /function renderCompassGauge/);
   assert.match(app, /renderClassicGauge\(elements\.depthGauge/);
   assert.match(app, /renderCompassGauge\(elements\.windGauge/);
+  assert.match(app, /renderClassicGauge\(elements\.rudderGauge/);
+  assert.match(app, /renderClassicGauge\(elements\.waterTemperatureGauge/);
+  assert.match(app, /function formatRudderAngle/);
   assert.match(app, /formatRelativeAngle\(apparentWind\.angleDegrees\)/);
   assert.match(app, /current\.driftKnots/);
   assert.match(app, /const DEPTH_SCALE_STEPS = \[10, 50, 100, 200\]/);
@@ -62,7 +67,7 @@ test("webapp uses compact marine classic hybrid instruments", () => {
   assert.match(app, /gpsBand\(gps\)/);
   assert.doesNotMatch(app, /updatedAt/);
   assert.doesNotMatch(app, /temperatureFill/);
-  assert.doesNotMatch(html, /Water temperature/);
+  assert.match(html, /Water temperature/);
 });
 
 test("webapp slows status polling when hidden", () => {
