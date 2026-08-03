@@ -2,6 +2,9 @@
 
 ## Version 1.2
 
+`v0.6.6` makes Depth the same size as the other standard gauges while keeping
+Wind as the large three-column instrument.
+
 `v0.6.5` adds true Heading and Cross Track Error instruments. XTE is displayed
 as a magnitude in metres with Port/Stbd direction, while the normalized Signal K
 projection retains its signed metres contract and clears explicitly when route
@@ -103,7 +106,7 @@ keep an XTE alarm active after route termination.
 
 ```bash
 cd ~/.signalk
-npm install git+https://github.com/ajrm-marine-suite/signalk-ajrm-marine-instruments.git#v0.6.5 --omit=dev --no-package-lock
+npm install git+https://github.com/ajrm-marine-suite/signalk-ajrm-marine-instruments.git#v0.6.6 --omit=dev --no-package-lock
 sudo systemctl restart signalk
 ```
 

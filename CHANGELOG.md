@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.6.6
+
+- Make the Depth card the same one-column size as the other standard gauges
+  while retaining Wind's larger three-column layout.
+
 ## 0.6.5
 
 - Add true-heading and cross-track-error instruments, displaying XTE as a

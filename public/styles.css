@@ -108,10 +108,6 @@ p {
 .gauge-card.wide { grid-column: span 2; }
 .wind-card.wide { grid-column: span 3; }
 
-.gauge-card.medium {
-  grid-column: span 2;
-}
-
 .bezel {
   position: relative;
   height: 100%;
@@ -188,8 +184,7 @@ p {
     0 8px 18px rgba(0, 0, 0, 0.55);
 }
 
-.wide .face,
-.medium .face {
+.wide .face {
   width: min(100%, 214px);
 }
 
@@ -1015,7 +1010,6 @@ p {
   }
 
   .gauge-card.wide,
-  .gauge-card.medium,
   .gps-card {
     grid-column: span 1;
   }

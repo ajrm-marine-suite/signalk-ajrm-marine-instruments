@@ -15,7 +15,10 @@ test("webapp uses compact marine classic hybrid instruments", () => {
   assert.match(html, /marine-classic/);
   assert.match(html, /class="bezel"/);
   assert.match(html, /id="depthGauge"/);
+  assert.match(html, /id="depthInstrument" class="instrument gauge-card"/);
+  assert.doesNotMatch(html, /id="depthInstrument" class="[^"]*medium/);
   assert.match(html, /id="windGauge"/);
+  assert.match(html, /id="windInstrument" class="instrument gauge-card wind-card wide"/);
   assert.match(html, /id="sogGauge"/);
   assert.match(html, /id="cogGauge"/);
   assert.match(html, /id="headingGauge"/);
