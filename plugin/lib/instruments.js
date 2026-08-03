@@ -3,6 +3,11 @@
 const MS_TO_KNOTS = 1.9438444924406048;
 const NAVIGATION_REFERENCE_MAX_AGE_MS = 15_000;
 const ENGAGED_AUTOPILOT_STATES = new Set(["auto", "heading", "wind", "route"]);
+const CROSS_TRACK_ERROR_PATHS = [
+  "navigation.course.calcValues.crossTrackError",
+  "navigation.courseGreatCircle.crossTrackError",
+  "navigation.courseRhumbline.crossTrackError",
+];
 
 const CARDINALS = [
   "N",
@@ -156,6 +161,8 @@ function buildInstrumentState(app, options = {}) {
       ? navigationReference?.bowHeadingTrue?.value
       : readSelfValue(app, "navigation.headingTrue"),
   );
+  const crossTrackErrorSelection = readFirstPresentNumber(app, CROSS_TRACK_ERROR_PATHS);
+  const crossTrackError = crossTrackErrorSelection.value;
   const clockReference = navigationReference?.clockReference;
   const gnssQuality = navigationReference?.groundTrack?.quality;
   const exhaustWaterTemperature = readSelfValue(
@@ -186,6 +193,8 @@ function buildInstrumentState(app, options = {}) {
       rudderAngle: "steering.rudderAngle",
       autopilotState: "steering.autopilot.state",
       waterTemperature: "environment.water.temperature",
+      headingTrue: "navigation.headingTrue",
+      crossTrackError: crossTrackErrorSelection.path,
     },
     depth: {
       meters: round(depthMeters, 2),
@@ -270,6 +279,8 @@ function buildInstrumentState(app, options = {}) {
       cogCardinal: cardinalDirection(cog),
       sogKnots: round(knotsFromMetersPerSecond(sog), 1),
       headingTrueDegrees: round(signalKAngleToDegrees(bowHeadingTrue), 0),
+      headingTrueCardinal: cardinalDirection(signalKAngleToDegrees(bowHeadingTrue)),
+      crossTrackErrorMeters: round(crossTrackError, 1),
       referenceKind: clockReference?.kind || null,
       referenceDegreesTrue: round(
         signalKAngleToDegrees(clockReference?.value),
@@ -304,6 +315,17 @@ function readFirstValue(app, paths) {
     if (value != null) return value;
   }
   return null;
+}
+
+function readFirstPresentNumber(app, paths) {
+  if (typeof app?.getSelfPath !== "function") return { path: null, value: null };
+  for (const path of paths) {
+    const entry = app.getSelfPath(path);
+    if (entry !== undefined && entry !== null) {
+      return { path, value: finiteNumber(unwrapSignalKValue(entry)) };
+    }
+  }
+  return { path: null, value: null };
 }
 
 function stringValue(value) {

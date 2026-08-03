@@ -63,6 +63,7 @@ test("buildInstrumentState converts common Signal K self values", () => {
     "navigation.headingTrue": { value: Math.PI },
     "navigation.courseOverGroundTrue": { value: Math.PI / 2 },
     "navigation.speedOverGround": { value: 1.5 },
+    "navigation.course.calcValues.crossTrackError": { value: -18.26 },
     "environment.current.drift": { value: 9.9 },
     "environment.current.setTrue": { value: 0 },
     "navigation.position": { value: { latitude: 56.1234567, longitude: -5.9876543, altitude: 7.2 } },
@@ -153,6 +154,8 @@ test("buildInstrumentState converts common Signal K self values", () => {
   assert.equal(state.navigation.sogKnots, 2.9);
   assert.equal(state.navigation.cogCardinal, "E");
   assert.equal(state.navigation.headingTrueDegrees, 180);
+  assert.equal(state.navigation.headingTrueCardinal, "S");
+  assert.equal(state.navigation.crossTrackErrorMeters, -18.3);
   assert.equal(state.navigation.referenceKind, "heading");
   assert.equal(state.navigation.referenceSource, "YDEN.4");
   assert.equal(state.current.source, "independent-current-sensor");
@@ -167,6 +170,28 @@ test("buildInstrumentState converts common Signal K self values", () => {
   assert.equal(state.rudder.measurementKind, "pilot-helm-position-proxy");
   assert.equal(state.paths.waterTemperature, "environment.water.temperature");
   assert.equal(state.paths.rudderAngle, "steering.rudderAngle");
+  assert.equal(state.paths.headingTrue, "navigation.headingTrue");
+  assert.equal(state.paths.crossTrackError, "navigation.course.calcValues.crossTrackError");
+});
+
+test("heading and cross-track error remain explicitly null when unavailable", () => {
+  const state = buildInstrumentState({ getSelfPath() { return null; } });
+
+  assert.equal(state.navigation.headingTrueDegrees, null);
+  assert.equal(state.navigation.headingTrueCardinal, "");
+  assert.equal(state.navigation.crossTrackErrorMeters, null);
+  assert.equal(state.paths.crossTrackError, null);
+});
+
+test("an explicit modern-course XTE null does not fall through to retained legacy XTE", () => {
+  const values = {
+    "navigation.course.calcValues.crossTrackError": { value: null },
+    "navigation.courseGreatCircle.crossTrackError": { value: 42 },
+  };
+  const state = buildInstrumentState({ getSelfPath(path) { return values[path]; } });
+
+  assert.equal(state.navigation.crossTrackErrorMeters, null);
+  assert.equal(state.paths.crossTrackError, "navigation.course.calcValues.crossTrackError");
 });
 
 test("withholds TP32 rudder position while the autopilot is in standby", () => {

@@ -5,12 +5,14 @@ const { buildInstrumentState } = require("./lib/instruments");
 
 const PLUGIN_ID = "signalk-ajrm-marine-instruments";
 const PILOT_HELM_ANGLE_PATH = "plugins.ajrmMarineInstruments.pilotHelmAngle";
+const CROSS_TRACK_ERROR_PATH = "plugins.ajrmMarineInstruments.crossTrackError";
 
 module.exports = function ajrmMarineInstruments(app) {
   const plugin = {};
   let options = normalizeOptions({});
   let unsubscribes = [];
   let lastPublishedPilotHelmAngle = Symbol("not-published");
+  let lastPublishedCrossTrackError = Symbol("not-published");
 
   plugin.id = PLUGIN_ID;
   plugin.name = "AJRM Marine Instruments";
@@ -42,14 +44,15 @@ module.exports = function ajrmMarineInstruments(app) {
 
   plugin.start = (pluginOptions = {}) => {
     options = normalizeOptions(pluginOptions);
-    subscribeToPilotHelmInputs();
-    publishPilotHelmAngle();
+    subscribeToProjectionInputs();
+    publishInstrumentProjections();
     app.setPluginStatus(`Started v${packageInfo.version}`);
   };
 
   plugin.stop = () => {
     for (const unsubscribe of unsubscribes.splice(0)) unsubscribe();
     publishPilotHelmValue(null);
+    publishCrossTrackErrorValue(null);
   };
 
   plugin.registerWithRouter = function registerWithRouter(router) {
@@ -71,7 +74,7 @@ module.exports = function ajrmMarineInstruments(app) {
 
   return plugin;
 
-  function subscribeToPilotHelmInputs() {
+  function subscribeToProjectionInputs() {
     if (!app.subscriptionmanager?.subscribe) return;
     app.subscriptionmanager.subscribe(
       {
@@ -79,22 +82,45 @@ module.exports = function ajrmMarineInstruments(app) {
         subscribe: [
           { path: "steering.rudderAngle", policy: "instant", format: "delta" },
           { path: "steering.autopilot.state", policy: "instant", format: "delta" },
+          { path: "navigation.course.calcValues.crossTrackError", policy: "instant", format: "delta" },
+          { path: "navigation.courseGreatCircle.crossTrackError", policy: "instant", format: "delta" },
+          { path: "navigation.courseRhumbline.crossTrackError", policy: "instant", format: "delta" },
         ],
       },
       unsubscribes,
       (error) => app.error?.(`[${PLUGIN_ID}] subscription error: ${error}`),
-      () => publishPilotHelmAngle(),
+      () => publishInstrumentProjections(),
     );
   }
 
-  function publishPilotHelmAngle() {
+  function publishInstrumentProjections() {
     try {
       const state = buildInstrumentState(app, { ...options, version: packageInfo.version });
       publishPilotHelmValue(state.rudder?.angleRadians ?? null);
+      publishCrossTrackErrorValue(state.navigation?.crossTrackErrorMeters ?? null);
     } catch (error) {
-      app.error?.(`[${PLUGIN_ID}] pilot helm projection error: ${error.stack || error.message}`);
+      app.error?.(`[${PLUGIN_ID}] instrument projection error: ${error.stack || error.message}`);
       publishPilotHelmValue(null);
+      publishCrossTrackErrorValue(null);
     }
+  }
+
+  function publishCrossTrackErrorValue(value) {
+    if (Object.is(value, lastPublishedCrossTrackError)) return;
+    lastPublishedCrossTrackError = value;
+    publishValue(CROSS_TRACK_ERROR_PATH, value);
+  }
+
+  function publishValue(path, value) {
+    app.handleMessage?.(PLUGIN_ID, {
+      context: "vessels.self",
+      updates: [
+        {
+          timestamp: new Date().toISOString(),
+          values: [{ path, value }],
+        },
+      ],
+    });
   }
 
   function publishPilotHelmValue(value) {
@@ -134,3 +160,4 @@ module.exports = function ajrmMarineInstruments(app) {
 };
 
 module.exports.PILOT_HELM_ANGLE_PATH = PILOT_HELM_ANGLE_PATH;
+module.exports.CROSS_TRACK_ERROR_PATH = CROSS_TRACK_ERROR_PATH;

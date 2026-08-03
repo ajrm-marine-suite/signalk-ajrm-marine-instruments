@@ -8,6 +8,7 @@ const DEPTH_SCALE_HYSTERESIS = {
 };
 const SOG_SCALE_STEPS = [6, 12, 24, 40];
 const TEMPERATURE_SCALE_STEPS = [80, 100, 120];
+const XTE_SCALE_STEPS = [25, 50, 100, 250, 500, 1000];
 
 const elements = {
   statusDot: document.getElementById("statusDot"),
@@ -28,6 +29,10 @@ const elements = {
   sogGauge: document.getElementById("sogGauge"),
   cogInstrument: document.getElementById("cogInstrument"),
   cogGauge: document.getElementById("cogGauge"),
+  headingInstrument: document.getElementById("headingInstrument"),
+  headingGauge: document.getElementById("headingGauge"),
+  xteInstrument: document.getElementById("xteInstrument"),
+  xteGauge: document.getElementById("xteGauge"),
   rudderInstrument: document.getElementById("rudderInstrument"),
   rudderGauge: document.getElementById("rudderGauge"),
   rudderDetail: document.getElementById("rudderDetail"),
@@ -145,6 +150,34 @@ function render(status) {
     ],
   });
   setBand(elements.cogInstrument, nav.cogDegrees == null ? "offline" : "safe");
+  renderCompassGauge(elements.headingGauge, {
+    label: "Heading",
+    valueText: nav.headingTrueDegrees == null
+      ? "--"
+      : `${String(Math.round(nav.headingTrueDegrees)).padStart(3, "0")}°`,
+    units: nav.headingTrueCardinal || "",
+    needles: [
+      { angleDeg: nav.headingTrueDegrees, color: "#22c7f2", className: "heading", length: 76 },
+    ],
+  });
+  setBand(elements.headingInstrument, nav.headingTrueDegrees == null ? "offline" : "safe");
+
+  const crossTrackError = nav.crossTrackErrorMeters;
+  const xteScale = chooseScale(Math.abs(Number(crossTrackError)), XTE_SCALE_STEPS, 25);
+  renderClassicGauge(elements.xteGauge, {
+    label: "XTE",
+    units: formatXteDirection(crossTrackError),
+    measurement: "PORT     STBD",
+    min: -xteScale.max,
+    max: xteScale.max,
+    value: crossTrackError == null ? undefined : crossTrackError,
+    displayValue: crossTrackError == null ? "--" : Math.abs(crossTrackError).toFixed(1),
+    tickLabelFormatter: (value) => formatScaleLabel(Math.abs(value)),
+    major: xteScale.max / 2,
+    minor: xteScale.max / 4,
+    decimals: 1,
+  });
+  setBand(elements.xteInstrument, crossTrackError == null ? "offline" : "safe");
 
   const rudderAngle = status.rudder?.angleDegrees;
   renderClassicGauge(elements.rudderGauge, {
@@ -242,6 +275,8 @@ function renderClassicGauge(node, options) {
     major = 2,
     minor = 1,
     decimals = 1,
+    displayValue: configuredDisplayValue = null,
+    tickLabelFormatter = formatScaleLabel,
     startDeg = 220,
     endDeg = 500,
     sectors = [],
@@ -259,7 +294,7 @@ function renderClassicGauge(node, options) {
     tickParts.push(`<line class="${isMajor ? "svg-tick-major" : "svg-tick-minor"}" x1="${inner.x.toFixed(3)}" y1="${inner.y.toFixed(3)}" x2="${outer.x.toFixed(3)}" y2="${outer.y.toFixed(3)}"></line>`);
     if (isMajor) {
       const text = polar(cx, cy, scaleRadius - 24, angle);
-      tickParts.push(`<text class="svg-tick-label" x="${text.x.toFixed(3)}" y="${text.y.toFixed(3)}">${formatScaleLabel(tick)}</text>`);
+      tickParts.push(`<text class="svg-tick-label" x="${text.x.toFixed(3)}" y="${text.y.toFixed(3)}">${escapeHtml(tickLabelFormatter(tick))}</text>`);
     }
   }
   const sectorParts = sectors.map((sector, index) => {
@@ -269,7 +304,9 @@ function renderClassicGauge(node, options) {
   });
   const needleAngle = valueAngle(value, min, max, startDeg, endDeg);
   const needleEnd = polar(cx, cy, 68, needleAngle);
-  const displayValue = Number.isFinite(Number(value)) ? Number(value).toFixed(decimals) : "--";
+  const displayValue = configuredDisplayValue ?? (
+    Number.isFinite(Number(value)) ? Number(value).toFixed(decimals) : "--"
+  );
   node.innerHTML = `
     <svg viewBox="0 0 220 220" role="img" aria-label="${escapeHtml(label)} gauge">
       <circle class="svg-gauge-face" cx="${cx}" cy="${cy}" r="98"></circle>
@@ -397,6 +434,14 @@ function setText(element, value) {
 function formatNumber(value, decimals) {
   const number = Number(value);
   return Number.isFinite(number) ? number.toFixed(decimals) : "--";
+}
+
+function formatXteDirection(value) {
+  const number = Number(value);
+  if (!Number.isFinite(number)) return "m";
+  if (number < 0) return "m Port";
+  if (number > 0) return "m Stbd";
+  return "m On track";
 }
 
 function formatHeading(degrees, cardinal = "", suffix = "") {

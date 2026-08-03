@@ -2,6 +2,11 @@
 
 ## Version 1.2
 
+`v0.6.5` adds true Heading and Cross Track Error instruments. XTE is displayed
+as a magnitude in metres with Port/Stbd direction, while the normalized Signal K
+projection retains its signed metres contract and clears explicitly when route
+data is unavailable.
+
 `v0.5.2` replaces the live instrument dial internals with the SVG classic-gauge
 renderer from the design study, so Depth, Wind, SOG, COG, and Exhaust use the
 new dial faces rather than the older CSS needle layout.
@@ -56,6 +61,11 @@ It displays:
   Reference; arbitrary or GPS-derived `environment.current.*` values are not
   presented as trusted tide/current
 - COG and SOG
+- True heading, when an AJRM Navigation Reference heading or raw
+  `navigation.headingTrue` is available
+- Cross-track-error magnitude in metres with **Port** or **Stbd** direction,
+  using the current Signal K course API value with Great Circle and Rhumbline
+  compatibility fallbacks
 - TP32 pilot helm-position proxy on a signed port/amidships/starboard dial,
   shown only when Signal K explicitly reports an engaged autopilot mode. It is
   not presented as a calibrated physical rudder measurement, and standby or
@@ -76,11 +86,24 @@ The value uses Signal K radians. It is present only while
 In AJRM Marine Instrument Alerts, select **Radians to degrees** if thresholds
 are to be entered and spoken in degrees.
 
+The plugin also publishes the currently selected cross-track error at:
+
+```text
+plugins.ajrmMarineInstruments.crossTrackError
+```
+
+This normalized value retains the signed Signal K metres contract for downstream
+consumers, while the instrument presents magnitude plus Port/Stbd direction. It
+is explicitly cleared to `null` when
+the active course source reports no XTE. An explicit null from the modern
+course API is authoritative, so an older retained compatibility value cannot
+keep an XTE alarm active after route termination.
+
 ## Install On The Pi
 
 ```bash
 cd ~/.signalk
-npm install git+https://github.com/ajrm-marine-suite/signalk-ajrm-marine-instruments.git#v0.6.4 --omit=dev --no-package-lock
+npm install git+https://github.com/ajrm-marine-suite/signalk-ajrm-marine-instruments.git#v0.6.5 --omit=dev --no-package-lock
 sudo systemctl restart signalk
 ```
 

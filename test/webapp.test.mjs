@@ -18,6 +18,8 @@ test("webapp uses compact marine classic hybrid instruments", () => {
   assert.match(html, /id="windGauge"/);
   assert.match(html, /id="sogGauge"/);
   assert.match(html, /id="cogGauge"/);
+  assert.match(html, /id="headingGauge"/);
+  assert.match(html, /id="xteGauge"/);
   assert.match(html, /id="temperatureGauge"/);
   assert.match(html, /id="rudderGauge"/);
   assert.match(html, /id="waterTemperatureGauge"/);
@@ -55,6 +57,15 @@ test("webapp uses compact marine classic hybrid instruments", () => {
   assert.match(app, /renderCompassGauge\(elements\.windGauge/);
   assert.match(app, /renderClassicGauge\(elements\.rudderGauge/);
   assert.match(app, /renderClassicGauge\(elements\.waterTemperatureGauge/);
+  assert.match(app, /renderCompassGauge\(elements\.headingGauge/);
+  assert.match(app, /renderClassicGauge\(elements\.xteGauge/);
+  assert.match(app, /nav\.crossTrackErrorMeters/);
+  assert.match(app, /measurement: "PORT     STBD"/);
+  assert.match(app, /displayValue: crossTrackError == null \? "--" : Math\.abs\(crossTrackError\)\.toFixed\(1\)/);
+  assert.match(app, /tickLabelFormatter: \(value\) => formatScaleLabel\(Math\.abs\(value\)\)/);
+  assert.match(app, /function formatXteDirection/);
+  assert.match(app, /return "m Port"/);
+  assert.match(app, /return "m Stbd"/);
   assert.match(app, /function formatRudderAngle/);
   assert.match(app, /formatRelativeAngle\(apparentWind\.angleDegrees\)/);
   assert.match(app, /current\.driftKnots/);

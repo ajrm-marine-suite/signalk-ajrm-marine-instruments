@@ -1,12 +1,16 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import createPlugin, { PILOT_HELM_ANGLE_PATH } from "../plugin/index.js";
+import createPlugin, {
+  CROSS_TRACK_ERROR_PATH,
+  PILOT_HELM_ANGLE_PATH,
+} from "../plugin/index.js";
 
 test("publishes a gated pilot helm angle and clears it outside engaged modes", () => {
   const values = {
     "steering.rudderAngle": { value: Math.PI / 12 },
     "steering.autopilot.state": { value: "standby" },
+    "navigation.course.calcValues.crossTrackError": { value: -12.4 },
   };
   const messages = [];
   const subscriptions = [];
@@ -34,20 +38,28 @@ test("publishes a gated pilot helm angle and clears it outside engaged modes", (
   assert.deepEqual(subscriptions[0].subscribe.map((entry) => entry.path), [
     "steering.rudderAngle",
     "steering.autopilot.state",
+    "navigation.course.calcValues.crossTrackError",
+    "navigation.courseGreatCircle.crossTrackError",
+    "navigation.courseRhumbline.crossTrackError",
   ]);
-  assert.equal(projectedValue(messages.at(-1)), null);
+  assert.equal(projectedValue(messages, PILOT_HELM_ANGLE_PATH), null);
+  assert.equal(projectedValue(messages, CROSS_TRACK_ERROR_PATH), -12.4);
 
   values["steering.autopilot.state"] = { value: "heading" };
   handleDelta({ updates: [] });
-  assert.equal(projectedValue(messages.at(-1)), Math.PI / 12);
+  assert.equal(projectedValue(messages, PILOT_HELM_ANGLE_PATH), Math.PI / 12);
 
   values["steering.rudderAngle"] = { value: -Math.PI / 18 };
   handleDelta({ updates: [] });
-  assert.equal(projectedValue(messages.at(-1)), -Math.PI / 18);
+  assert.equal(projectedValue(messages, PILOT_HELM_ANGLE_PATH), -Math.PI / 18);
+
+  values["navigation.course.calcValues.crossTrackError"] = { value: null };
+  handleDelta({ updates: [] });
+  assert.equal(projectedValue(messages, CROSS_TRACK_ERROR_PATH), null);
 
   values["steering.autopilot.state"] = { value: "standby" };
   handleDelta({ updates: [] });
-  assert.equal(projectedValue(messages.at(-1)), null);
+  assert.equal(projectedValue(messages, PILOT_HELM_ANGLE_PATH), null);
 
   const messageCount = messages.length;
   handleDelta({ updates: [] });
@@ -57,9 +69,12 @@ test("publishes a gated pilot helm angle and clears it outside engaged modes", (
   assert.equal(unsubscribed, true);
 });
 
-function projectedValue(message) {
+function projectedValue(messages, expectedPath) {
+  const message = messages.findLast((entry) =>
+    entry.delta.updates[0].values[0].path === expectedPath
+  );
   assert.equal(message.id, "signalk-ajrm-marine-instruments");
   const value = message.delta.updates[0].values[0];
-  assert.equal(value.path, PILOT_HELM_ANGLE_PATH);
+  assert.equal(value.path, expectedPath);
   return value.value;
 }

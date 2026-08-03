@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.6.5
+
+- Add true-heading and cross-track-error instruments, displaying XTE as a
+  magnitude with Port/Stbd direction and preserving null whenever the
+  corresponding navigation information is unavailable.
+- Publish a normalized nullable XTE value at
+  `plugins.ajrmMarineInstruments.crossTrackError`, preferring the modern course
+  API and preventing an explicit route-end null from falling through to a
+  retained legacy course value.
+
 ## 0.6.4
 
 - Publish `plugins.ajrmMarineInstruments.pilotHelmAngle` in radians while the
