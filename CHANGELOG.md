@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.6.8
+
+- Make test discovery portable to Node 20 on ARMv7 runners.
+
 ## 0.6.7
 
 - Add Signal K configuration switches for showing or hiding each instrument

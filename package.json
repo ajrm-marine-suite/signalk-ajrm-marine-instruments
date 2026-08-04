@@ -1,10 +1,10 @@
 {
   "name": "signalk-ajrm-marine-instruments",
-  "version": "0.6.7",
+  "version": "0.6.8",
   "description": "Large-format Signal K instrument display for AJRM Marine Suite.",
   "main": "plugin/index.js",
   "scripts": {
-    "test": "node --test \"test/**/*.test.mjs\" && node --check plugin/index.js && node --check public/app.js"
+    "test": "node --test && node --check plugin/index.js && node --check public/app.js"
   },
   "keywords": [
     "signalk-node-server-plugin",

@@ -2,7 +2,7 @@
 
 ## Version 1.2
 
-`v0.6.7` adds per-instrument visibility switches to Signal K plugin
+`v0.6.8` adds per-instrument visibility switches to Signal K plugin
 configuration. Untick instruments that are not fitted or useful on the vessel;
 this changes the web display only.
 
@@ -115,7 +115,7 @@ keep an XTE alarm active after route termination.
 
 ```bash
 cd ~/.signalk
-npm install git+https://github.com/ajrm-marine-suite/signalk-ajrm-marine-instruments.git#v0.6.7 --omit=dev --no-package-lock
+npm install git+https://github.com/ajrm-marine-suite/signalk-ajrm-marine-instruments.git#v0.6.8 --omit=dev --no-package-lock
 sudo systemctl restart signalk
 ```
 
