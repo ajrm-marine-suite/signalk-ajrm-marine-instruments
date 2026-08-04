@@ -6,6 +6,18 @@ const { buildInstrumentState } = require("./lib/instruments");
 const PLUGIN_ID = "signalk-ajrm-marine-instruments";
 const PILOT_HELM_ANGLE_PATH = "plugins.ajrmMarineInstruments.pilotHelmAngle";
 const CROSS_TRACK_ERROR_PATH = "plugins.ajrmMarineInstruments.crossTrackError";
+const DEFAULT_VISIBLE_INSTRUMENTS = Object.freeze({
+  depth: true,
+  wind: true,
+  speedOverGround: true,
+  courseOverGround: true,
+  heading: true,
+  crossTrackError: true,
+  pilotHelm: true,
+  gps: true,
+  exhaustTemperature: true,
+  waterTemperature: true,
+});
 
 module.exports = function ajrmMarineInstruments(app) {
   const plugin = {};
@@ -39,6 +51,25 @@ module.exports = function ajrmMarineInstruments(app) {
         title: "Exhaust water temperature path",
         default: "environment.inside.engineRoom.temperature",
       },
+      visibleInstruments: {
+        type: "object",
+        title: "Displayed instruments",
+        description: "Untick instruments that are not fitted or are not useful on this vessel.",
+        additionalProperties: false,
+        default: { ...DEFAULT_VISIBLE_INSTRUMENTS },
+        properties: {
+          depth: instrumentVisibilitySchema("Depth"),
+          wind: instrumentVisibilitySchema("Wind (large combined instrument)"),
+          speedOverGround: instrumentVisibilitySchema("Speed over ground (SOG)"),
+          courseOverGround: instrumentVisibilitySchema("Course over ground (COG)"),
+          heading: instrumentVisibilitySchema("Heading"),
+          crossTrackError: instrumentVisibilitySchema("Cross-track error (XTE)"),
+          pilotHelm: instrumentVisibilitySchema("Pilot helm (tiller pilot)"),
+          gps: instrumentVisibilitySchema("GPS position and quality"),
+          exhaustTemperature: instrumentVisibilitySchema("Exhaust temperature"),
+          waterTemperature: instrumentVisibilitySchema("Water temperature"),
+        },
+      },
     },
   };
 
@@ -62,6 +93,7 @@ module.exports = function ajrmMarineInstruments(app) {
           ...buildInstrumentState(app, { ...options, version: packageInfo.version }),
           controls: {
             refreshIntervalSeconds: options.refreshIntervalSeconds,
+            visibleInstruments: { ...options.visibleInstruments },
           },
         });
       } catch (error) {
@@ -148,7 +180,15 @@ module.exports = function ajrmMarineInstruments(app) {
           value.engineRoomTemperaturePath ||
           "environment.inside.engineRoom.temperature",
       ).trim(),
+      visibleInstruments: normalizeVisibleInstruments(value.visibleInstruments),
     };
+  }
+
+  function normalizeVisibleInstruments(value) {
+    const configured = value && typeof value === "object" ? value : {};
+    return Object.fromEntries(
+      Object.keys(DEFAULT_VISIBLE_INSTRUMENTS).map((key) => [key, configured[key] !== false]),
+    );
   }
 
   function clampInt(value, fallback, min, max) {
@@ -159,5 +199,10 @@ module.exports = function ajrmMarineInstruments(app) {
 
 };
 
+function instrumentVisibilitySchema(title) {
+  return { type: "boolean", title, default: true };
+}
+
 module.exports.PILOT_HELM_ANGLE_PATH = PILOT_HELM_ANGLE_PATH;
 module.exports.CROSS_TRACK_ERROR_PATH = CROSS_TRACK_ERROR_PATH;
+module.exports.DEFAULT_VISIBLE_INSTRUMENTS = DEFAULT_VISIBLE_INSTRUMENTS;

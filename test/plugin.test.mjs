@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 
 import createPlugin, {
   CROSS_TRACK_ERROR_PATH,
+  DEFAULT_VISIBLE_INSTRUMENTS,
   PILOT_HELM_ANGLE_PATH,
 } from "../plugin/index.js";
 
@@ -67,6 +68,39 @@ test("publishes a gated pilot helm angle and clears it outside engaged modes", (
 
   plugin.stop();
   assert.equal(unsubscribed, true);
+});
+
+test("exposes configurable instrument visibility and defaults every card to visible", () => {
+  let statusHandler = null;
+  const app = {
+    getSelfPath() { return null; },
+    setPluginStatus() {},
+    handleMessage() {},
+  };
+  const plugin = createPlugin(app);
+  plugin.registerWithRouter({
+    get(path, handler) {
+      if (path === "/status") statusHandler = handler;
+    },
+  });
+  plugin.start({
+    visibleInstruments: {
+      crossTrackError: false,
+      exhaustTemperature: false,
+    },
+  });
+
+  let body = null;
+  statusHandler({}, {
+    json(value) { body = value; },
+    status() { return this; },
+  });
+
+  assert.deepEqual(Object.keys(plugin.schema.properties.visibleInstruments.properties), Object.keys(DEFAULT_VISIBLE_INSTRUMENTS));
+  assert.equal(body.controls.visibleInstruments.depth, true);
+  assert.equal(body.controls.visibleInstruments.wind, true);
+  assert.equal(body.controls.visibleInstruments.crossTrackError, false);
+  assert.equal(body.controls.visibleInstruments.exhaustTemperature, false);
 });
 
 function projectedValue(messages, expectedPath) {

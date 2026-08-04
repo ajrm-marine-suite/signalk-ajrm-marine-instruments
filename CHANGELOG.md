@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.6.7
+
+- Add Signal K configuration switches for showing or hiding each instrument
+  card independently, retaining the current all-visible display by default.
+
 ## 0.6.6
 
 - Make the Depth card the same one-column size as the other standard gauges

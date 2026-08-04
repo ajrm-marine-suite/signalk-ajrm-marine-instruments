@@ -49,6 +49,19 @@ const elements = {
   waterTemperatureGauge: document.getElementById("waterTemperatureGauge"),
 };
 
+const instrumentElements = {
+  depth: elements.depthInstrument,
+  wind: elements.windInstrument,
+  speedOverGround: elements.sogInstrument,
+  courseOverGround: elements.cogInstrument,
+  heading: elements.headingInstrument,
+  crossTrackError: elements.xteInstrument,
+  pilotHelm: elements.rudderInstrument,
+  gps: elements.gpsInstrument,
+  exhaustTemperature: elements.temperatureInstrument,
+  waterTemperature: elements.waterTemperatureInstrument,
+};
+
 let refreshTimer = null;
 let activeDepthScale = null;
 
@@ -76,6 +89,8 @@ async function refresh() {
 }
 
 function render(status) {
+  applyInstrumentVisibility(status.controls?.visibleInstruments);
+
   const depth = status.depth?.meters;
   activeDepthScale = chooseDepthScale(depth, activeDepthScale);
   const depthScale = scaleFromMax(activeDepthScale || 10);
@@ -238,6 +253,12 @@ function render(status) {
     sectors: [{ from: -5, to: 35, color: "#34c8f3" }],
   });
   setBand(elements.waterTemperatureInstrument, waterTemperature == null ? "offline" : "safe");
+}
+
+function applyInstrumentVisibility(visibility = {}) {
+  for (const [key, element] of Object.entries(instrumentElements)) {
+    if (element) element.hidden = visibility[key] === false;
+  }
 }
 
 function polar(cx, cy, radius, angleDeg) {

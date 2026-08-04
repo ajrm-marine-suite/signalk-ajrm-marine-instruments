@@ -105,6 +105,10 @@ p {
   min-width: 0;
 }
 
+.instrument[hidden] {
+  display: none;
+}
+
 .gauge-card.wide { grid-column: span 2; }
 .wind-card.wide { grid-column: span 3; }
 

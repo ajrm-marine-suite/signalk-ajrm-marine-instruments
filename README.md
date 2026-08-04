@@ -2,8 +2,17 @@
 
 ## Version 1.2
 
+`v0.6.7` adds per-instrument visibility switches to Signal K plugin
+configuration. Untick instruments that are not fitted or useful on the vessel;
+this changes the web display only.
+
 `v0.6.6` makes Depth the same size as the other standard gauges while keeping
 Wind as the large three-column instrument.
+
+Signal K plugin configuration includes a **Displayed instruments** group. Each
+card can be shown or hidden independently: Depth, Wind, SOG, COG, Heading, XTE,
+Pilot helm, GPS, Exhaust temperature, and Water temperature. All cards remain
+visible by default for compatibility with existing installations.
 
 `v0.6.5` adds true Heading and Cross Track Error instruments. XTE is displayed
 as a magnitude in metres with Port/Stbd direction, while the normalized Signal K
@@ -106,7 +115,7 @@ keep an XTE alarm active after route termination.
 
 ```bash
 cd ~/.signalk
-npm install git+https://github.com/ajrm-marine-suite/signalk-ajrm-marine-instruments.git#v0.6.6 --omit=dev --no-package-lock
+npm install git+https://github.com/ajrm-marine-suite/signalk-ajrm-marine-instruments.git#v0.6.7 --omit=dev --no-package-lock
 sudo systemctl restart signalk
 ```
 

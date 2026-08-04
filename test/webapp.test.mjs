@@ -49,6 +49,7 @@ test("webapp uses compact marine classic hybrid instruments", () => {
   assert.match(css, /\.legend-badge/);
   assert.match(css, /\.gps-panel/);
   assert.match(css, /\.gps-card/);
+  assert.match(css, /\.instrument\[hidden\]/);
   assert.doesNotMatch(css, /\.scale-20/);
   assert.doesNotMatch(css, /\.softkeys/);
   assert.doesNotMatch(css, /\.status-lcd/);
@@ -79,6 +80,8 @@ test("webapp uses compact marine classic hybrid instruments", () => {
   assert.match(app, /formatCoordinate\(gps\.latitude, "N", "S"\)/);
   assert.match(app, /formatGpsAccuracy\(gps\)/);
   assert.match(app, /gpsBand\(gps\)/);
+  assert.match(app, /applyInstrumentVisibility\(status\.controls\?\.visibleInstruments\)/);
+  assert.match(app, /element\.hidden = visibility\[key\] === false/);
   assert.doesNotMatch(app, /updatedAt/);
   assert.doesNotMatch(app, /temperatureFill/);
   assert.match(html, /Water temperature/);
