@@ -1,9 +1,11 @@
 # AJRM Marine Instruments
 
-## Version 1.2
+## Version 0.6.9
 
-`v0.6.8` adds per-instrument visibility switches to Signal K plugin
-configuration. Untick instruments that are not fitted or useful on the vessel;
+`v0.6.9` adds an explicit runtime contract for the derived pilot-helm and XTE
+paths, including units, nullable behavior, autopilot gating, and port/starboard
+sign semantics. `v0.6.8` added per-instrument visibility switches to Signal K
+plugin configuration. Untick instruments that are not fitted or useful on the vessel;
 this changes the web display only.
 
 `v0.6.6` makes Depth the same size as the other standard gauges while keeping
@@ -115,7 +117,7 @@ keep an XTE alarm active after route termination.
 
 ```bash
 cd ~/.signalk
-npm install git+https://github.com/ajrm-marine-suite/signalk-ajrm-marine-instruments.git#v0.6.8 --omit=dev --no-package-lock
+npm install git+https://github.com/ajrm-marine-suite/signalk-ajrm-marine-instruments.git#v0.6.9 --omit=dev --no-package-lock
 sudo systemctl restart signalk
 ```
 

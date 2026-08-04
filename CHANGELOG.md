@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.6.9
+
+- Expose an in-process status API and versioned contract for the derived
+  pilot-helm and XTE paths.
+- Declare radians, metre units, nullable behavior, autopilot engagement gating,
+  and XTE port/starboard sign semantics explicitly for suite BITE consumers.
+
 ## 0.6.8
 
 - Make test discovery portable to Node 20 on ARMv7 runners.

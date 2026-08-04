@@ -101,6 +101,18 @@ test("exposes configurable instrument visibility and defaults every card to visi
   assert.equal(body.controls.visibleInstruments.wind, true);
   assert.equal(body.controls.visibleInstruments.crossTrackError, false);
   assert.equal(body.controls.visibleInstruments.exhaustTemperature, false);
+  assert.equal(app.ajrmMarineInstrumentsApi.pluginId, "signalk-ajrm-marine-instruments");
+  assert.deepEqual(app.ajrmMarineInstrumentsApi.status().derivedPaths, body.derivedPaths);
+  assert.equal(body.derivedPaths.contract, "ajrm-marine-instruments-derived-paths-v1");
+  assert.equal(body.derivedPaths.pilotHelmAngle.unit, "rad");
+  assert.equal(body.derivedPaths.pilotHelmAngle.nullUnlessAutopilotEngaged, true);
+  assert.deepEqual(body.derivedPaths.pilotHelmAngle.autopilotEngagedStates, ["auto", "heading", "wind", "route"]);
+  assert.equal(body.derivedPaths.crossTrackError.unit, "m");
+  assert.equal(body.derivedPaths.crossTrackError.negativeDirection, "port");
+  assert.equal(body.derivedPaths.crossTrackError.positiveDirection, "starboard");
+
+  plugin.stop();
+  assert.equal(app.ajrmMarineInstrumentsApi, undefined);
 });
 
 function projectedValue(messages, expectedPath) {

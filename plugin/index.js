@@ -4,8 +4,10 @@ const packageInfo = require("../package.json");
 const { buildInstrumentState } = require("./lib/instruments");
 
 const PLUGIN_ID = "signalk-ajrm-marine-instruments";
+const AJRM_MARINE_INSTRUMENTS_API_REGISTRY = Symbol.for("mcdonaldajr.ajrmMarineInstrumentsApi");
 const PILOT_HELM_ANGLE_PATH = "plugins.ajrmMarineInstruments.pilotHelmAngle";
 const CROSS_TRACK_ERROR_PATH = "plugins.ajrmMarineInstruments.crossTrackError";
+const AUTOPILOT_ENGAGED_STATES = Object.freeze(["auto", "heading", "wind", "route"]);
 const DEFAULT_VISIBLE_INSTRUMENTS = Object.freeze({
   depth: true,
   wind: true,
@@ -77,6 +79,13 @@ module.exports = function ajrmMarineInstruments(app) {
     options = normalizeOptions(pluginOptions);
     subscribeToProjectionInputs();
     publishInstrumentProjections();
+    const api = {
+      pluginId: plugin.id,
+      version: packageInfo.version,
+      status: () => buildRuntimeStatus(),
+    };
+    app.ajrmMarineInstrumentsApi = api;
+    globalThis[AJRM_MARINE_INSTRUMENTS_API_REGISTRY] = api;
     app.setPluginStatus(`Started v${packageInfo.version}`);
   };
 
@@ -84,18 +93,18 @@ module.exports = function ajrmMarineInstruments(app) {
     for (const unsubscribe of unsubscribes.splice(0)) unsubscribe();
     publishPilotHelmValue(null);
     publishCrossTrackErrorValue(null);
+    if (app.ajrmMarineInstrumentsApi?.pluginId === plugin.id) {
+      delete app.ajrmMarineInstrumentsApi;
+    }
+    if (globalThis[AJRM_MARINE_INSTRUMENTS_API_REGISTRY]?.pluginId === plugin.id) {
+      delete globalThis[AJRM_MARINE_INSTRUMENTS_API_REGISTRY];
+    }
   };
 
   plugin.registerWithRouter = function registerWithRouter(router) {
     router.get("/status", (_req, res) => {
       try {
-        res.json({
-          ...buildInstrumentState(app, { ...options, version: packageInfo.version }),
-          controls: {
-            refreshIntervalSeconds: options.refreshIntervalSeconds,
-            visibleInstruments: { ...options.visibleInstruments },
-          },
-        });
+        res.json(buildRuntimeStatus());
       } catch (error) {
         app.error(`[${PLUGIN_ID}] status error: ${error.stack || error.message}`);
         res.status(500).json({ ok: false, error: error.message });
@@ -105,6 +114,36 @@ module.exports = function ajrmMarineInstruments(app) {
   };
 
   return plugin;
+
+  function buildRuntimeStatus() {
+    return {
+      ...buildInstrumentState(app, { ...options, version: packageInfo.version }),
+      controls: {
+        refreshIntervalSeconds: options.refreshIntervalSeconds,
+        visibleInstruments: { ...options.visibleInstruments },
+      },
+      derivedPaths: {
+        contract: "ajrm-marine-instruments-derived-paths-v1",
+        contractVersion: 1,
+        pilotHelmAngle: {
+          path: PILOT_HELM_ANGLE_PATH,
+          unit: "rad",
+          nullable: true,
+          nullUnlessAutopilotEngaged: true,
+          autopilotEngagedStates: [...AUTOPILOT_ENGAGED_STATES],
+        },
+        crossTrackError: {
+          path: CROSS_TRACK_ERROR_PATH,
+          unit: "m",
+          nullable: true,
+          signed: true,
+          negativeDirection: "port",
+          positiveDirection: "starboard",
+          zeroMeaning: "on-route",
+        },
+      },
+    };
+  }
 
   function subscribeToProjectionInputs() {
     if (!app.subscriptionmanager?.subscribe) return;
