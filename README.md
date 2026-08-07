@@ -1,63 +1,15 @@
 # AJRM Marine Instruments
 
-## Version 0.6.9
+## Version 0.7.0
 
-`v0.6.9` adds an explicit runtime contract for the derived pilot-helm and XTE
-paths, including units, nullable behavior, autopilot gating, and port/starboard
-sign semantics. `v0.6.8` added per-instrument visibility switches to Signal K
-plugin configuration. Untick instruments that are not fitted or useful on the vessel;
-this changes the web display only.
-
-`v0.6.6` makes Depth the same size as the other standard gauges while keeping
-Wind as the large three-column instrument.
+Version 0.7.0 is the reviewed standalone baseline before Instruments and
+Instrument Alerts are combined. It declares the supported Node runtime and API,
+restarts subscriptions safely, and removes an obsolete configuration-key alias.
 
 Signal K plugin configuration includes a **Displayed instruments** group. Each
 card can be shown or hidden independently: Depth, Wind, SOG, COG, Heading, XTE,
 Pilot helm, GPS, Exhaust temperature, and Water temperature. All cards remain
 visible by default for compatibility with existing installations.
-
-`v0.6.5` adds true Heading and Cross Track Error instruments. XTE is displayed
-as a magnitude in metres with Port/Stbd direction, while the normalized Signal K
-projection retains its signed metres contract and clears explicitly when route
-data is unavailable.
-
-`v0.5.2` replaces the live instrument dial internals with the SVG classic-gauge
-renderer from the design study, so Depth, Wind, SOG, COG, and Exhaust use the
-new dial faces rather than the older CSS needle layout.
-
-`v0.5.1` folds the classic-gauge design study into the live app. Depth now uses
-0-10, 0-50, 0-100, and 0-200m scale steps with hysteresis so it does not chatter
-around boundaries; the Wind card has a separate drift readout, purple tide/current
-pointer with arrowhead, compact dark AWS readout, and tide set readout below the
-dial; the Exhaust card no longer repeats "water temperature" under the gauge.
-
-`v0.5.0` refines the Marine Classic visual design. Wind readouts now sit in
-dedicated layout lanes instead of overlaying the dial, small-dial LCDs are less
-dominant, and the instrument cards have deeper layered bezels, subtle panel
-texture, and glass highlights for a more realistic marine-instrument feel.
-
-`v0.5.0` adds dynamic analogue scales and a compact GPS card. Depth now expands
-from an anchoring friendly 0-10m scale up through 20, 50, 100, 200, 300, and
-500m; SOG and temperature scales also expand when their values need more
-headroom. The GPS card shows latitude, longitude, accuracy, satellites, and
-HDOP/PDOP where Signal K provides them.
-
-`v0.5.0` rebuilds the Wind card as a Garmin-style tactical wind instrument with
-LCD readouts for TWD, AWA, TWS, TWA, AWS, tide/current drift, and tide set,
-plus separate graphical true, apparent, and current pointers.
-
-`v0.5.0` removes the transitional Status card, drops the decorative inactive
-soft-key labels below the dials, and gives gauge needles a clearer arrowhead.
-
-`v0.5.0` reduces HTTP access-log noise by using a calmer default web refresh
-interval and backing off further when the browser tab is hidden.
-
-`v0.5.0` adds the Marine Classic visual theme: compact Garmin-style hybrid
-instrument heads with black bezels, outside scales, LCD readouts, needles, and
-simple display-only colour bands.
-
-`v0.5.0` promoted the display-only instrument application as the working
-baseline. Audible monitoring remains in AJRM Marine Instrument Alerts.
 
 > **Alpha Release disclaimer:** This software is Alpha Release and has not been tested in live environments and must not be relied upon for navigation or safety. The Authors do not accept any responsibility for loss or damage as a result of using this software.
 
@@ -117,7 +69,7 @@ keep an XTE alarm active after route termination.
 
 ```bash
 cd ~/.signalk
-npm install git+https://github.com/ajrm-marine-suite/signalk-ajrm-marine-instruments.git#v0.6.9 --omit=dev --no-package-lock
+npm install git+https://github.com/ajrm-marine-suite/signalk-ajrm-marine-instruments.git#v0.7.0 --omit=dev --no-package-lock
 sudo systemctl restart signalk
 ```
 

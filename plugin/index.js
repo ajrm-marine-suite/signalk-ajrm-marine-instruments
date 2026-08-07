@@ -1,6 +1,7 @@
 "use strict";
 
 const packageInfo = require("../package.json");
+const openApi = require("./openApi.json");
 const { buildInstrumentState } = require("./lib/instruments");
 
 const PLUGIN_ID = "signalk-ajrm-marine-instruments";
@@ -27,6 +28,7 @@ module.exports = function ajrmMarineInstruments(app) {
   let unsubscribes = [];
   let lastPublishedPilotHelmAngle = Symbol("not-published");
   let lastPublishedCrossTrackError = Symbol("not-published");
+  let running = false;
 
   plugin.id = PLUGIN_ID;
   plugin.name = "AJRM Marine Instruments";
@@ -76,7 +78,11 @@ module.exports = function ajrmMarineInstruments(app) {
   };
 
   plugin.start = (pluginOptions = {}) => {
+    stopSubscriptions();
+    running = true;
     options = normalizeOptions(pluginOptions);
+    lastPublishedPilotHelmAngle = Symbol("not-published");
+    lastPublishedCrossTrackError = Symbol("not-published");
     subscribeToProjectionInputs();
     publishInstrumentProjections();
     const api = {
@@ -90,7 +96,8 @@ module.exports = function ajrmMarineInstruments(app) {
   };
 
   plugin.stop = () => {
-    for (const unsubscribe of unsubscribes.splice(0)) unsubscribe();
+    running = false;
+    stopSubscriptions();
     publishPilotHelmValue(null);
     publishCrossTrackErrorValue(null);
     if (app.ajrmMarineInstrumentsApi?.pluginId === plugin.id) {
@@ -99,6 +106,7 @@ module.exports = function ajrmMarineInstruments(app) {
     if (globalThis[AJRM_MARINE_INSTRUMENTS_API_REGISTRY]?.pluginId === plugin.id) {
       delete globalThis[AJRM_MARINE_INSTRUMENTS_API_REGISTRY];
     }
+    app.setPluginStatus?.("Stopped");
   };
 
   plugin.registerWithRouter = function registerWithRouter(router) {
@@ -112,6 +120,8 @@ module.exports = function ajrmMarineInstruments(app) {
     });
 
   };
+
+  plugin.getOpenApi = () => openApi;
 
   return plugin;
 
@@ -165,6 +175,7 @@ module.exports = function ajrmMarineInstruments(app) {
   }
 
   function publishInstrumentProjections() {
+    if (!running) return;
     try {
       const state = buildInstrumentState(app, { ...options, version: packageInfo.version });
       publishPilotHelmValue(state.rudder?.angleRadians ?? null);
@@ -194,6 +205,16 @@ module.exports = function ajrmMarineInstruments(app) {
     });
   }
 
+  function stopSubscriptions() {
+    for (const unsubscribe of unsubscribes.splice(0)) {
+      try {
+        unsubscribe();
+      } catch {
+        // Signal K unsubscribe callbacks are best-effort during restart/stop.
+      }
+    }
+  }
+
   function publishPilotHelmValue(value) {
     if (Object.is(value, lastPublishedPilotHelmAngle)) return;
     lastPublishedPilotHelmAngle = value;
@@ -216,7 +237,6 @@ module.exports = function ajrmMarineInstruments(app) {
         : "belowKeel",
       exhaustWaterTemperaturePath: String(
         value.exhaustWaterTemperaturePath ||
-          value.engineRoomTemperaturePath ||
           "environment.inside.engineRoom.temperature",
       ).trim(),
       visibleInstruments: normalizeVisibleInstruments(value.visibleInstruments),

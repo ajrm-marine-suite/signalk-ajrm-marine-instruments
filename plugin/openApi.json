@@ -1,0 +1,24 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "AJRM Marine Instruments API",
+    "version": "0.7.0"
+  },
+  "paths": {
+    "/status": {
+      "get": {
+        "summary": "Return the current instrument state and display controls",
+        "responses": {
+          "200": {
+            "description": "Current instrument state",
+            "content": {
+              "application/json": {
+                "schema": { "type": "object" }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

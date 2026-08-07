@@ -115,6 +115,32 @@ test("exposes configurable instrument visibility and defaults every card to visi
   assert.equal(app.ajrmMarineInstrumentsApi, undefined);
 });
 
+test("publishes OpenAPI and safely replaces subscriptions when restarted", () => {
+  let subscriptions = 0;
+  let unsubscriptions = 0;
+  const app = {
+    getSelfPath() { return null; },
+    setPluginStatus() {},
+    handleMessage() {},
+    subscriptionmanager: {
+      subscribe(_request, unsubscribes) {
+        subscriptions += 1;
+        unsubscribes.push(() => { unsubscriptions += 1; });
+      },
+    },
+  };
+  const plugin = createPlugin(app);
+  assert.equal(plugin.getOpenApi().openapi, "3.0.3");
+  assert.ok(plugin.getOpenApi().paths["/status"].get);
+
+  plugin.start();
+  plugin.start();
+  assert.equal(subscriptions, 2);
+  assert.equal(unsubscriptions, 1);
+  plugin.stop();
+  assert.equal(unsubscriptions, 2);
+});
+
 function projectedValue(messages, expectedPath) {
   const message = messages.findLast((entry) =>
     entry.delta.updates[0].values[0].path === expectedPath
