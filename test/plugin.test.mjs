@@ -82,6 +82,8 @@ test("exposes configurable instrument visibility and defaults every card to visi
     get(path, handler) {
       if (path === "/status") statusHandler = handler;
     },
+    put() {},
+    post() {},
   });
   plugin.start({
     visibleInstruments: {
@@ -139,6 +141,32 @@ test("publishes OpenAPI and safely replaces subscriptions when restarted", () =>
   assert.equal(unsubscriptions, 1);
   plugin.stop();
   assert.equal(unsubscriptions, 2);
+});
+
+test("integrates the alert provider routes and status", () => {
+  const routes = new Set();
+  const app = {
+    getSelfPath() { return null; },
+    getDataDirPath() { return null; },
+    setPluginStatus() {},
+    handleMessage() {},
+    error() {},
+  };
+  const plugin = createPlugin(app);
+  plugin.registerWithRouter({
+    get(path) { routes.add(`GET ${path}`); },
+    put(path) { routes.add(`PUT ${path}`); },
+    post(path) { routes.add(`POST ${path}`); },
+  });
+  plugin.start();
+
+  assert.ok(routes.has("GET /alerts/status"));
+  assert.ok(routes.has("GET /alerts/settings"));
+  assert.ok(routes.has("PUT /alerts/settings"));
+  assert.ok(routes.has("POST /alerts/depth-callout/drop"));
+  assert.equal(app.ajrmMarineInstrumentsApi.status().alerts.enabled, false);
+  assert.equal(app.ajrmMarineInstrumentsApi.status().alerts.capabilities.anchoringDepthCallout, true);
+  plugin.stop();
 });
 
 function projectedValue(messages, expectedPath) {

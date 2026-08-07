@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AJRM Marine Instrument Alerts</title>
+    <link rel="stylesheet" href="./alerts.css" />
+  </head>
+  <body>
+    <main>
+      <header>
+        <div>
+          <p class="eyebrow">Signal K monitoring</p>
+          <h1>AJRM Marine Instrument Alerts</h1>
+          <p class="lede">Calm announcements when values cross limits or change too quickly.</p>
+        </div>
+        <div class="connection"><span id="statusDot"></span><span id="statusText">Connecting</span></div>
+      </header>
+
+      <section class="toolbar">
+        <label class="master"><input id="enabled" type="checkbox" /> Enable monitoring</label>
+        <div class="actions">
+          <button id="addMonitor" type="button" class="secondary">Add instrument</button>
+          <button id="saveSettings" type="button" class="save-button">Saved</button>
+        </div>
+        <p id="settingsMessage" class="message"></p>
+      </section>
+
+      <section class="callout-card">
+        <div class="callout-heading">
+          <label class="master"><input id="depthCalloutEnabled" type="checkbox" /> Enable depth callout</label>
+          <span id="depthCalloutState" class="active-state">Off</span>
+          <button id="anchorDropped" type="button" class="secondary">Drop Anchor</button>
+        </div>
+        <div class="fields callout-fields">
+          <label>Depth Signal K path<input id="depthCalloutPath" type="text" spellcheck="false" /></label>
+          <label>Target minimum depth<input id="depthTargetMinimum" type="number" min="0" step="0.1" /></label>
+          <label>Target maximum depth<input id="depthTargetMaximum" type="number" min="0" step="0.1" /></label>
+          <label>Use tenths below<input id="depthFineBelow" type="number" min="0" step="0.1" /></label>
+          <label>Minimum interval (s)<input id="depthMinimumInterval" type="number" min="1" step="1" /></label>
+          <label>Repeat unchanged after (s)<input id="depthRepeatSame" type="number" min="5" step="1" /></label>
+          <label class="check-row"><input id="depthSayUnits" type="checkbox" /> Say meters</label>
+        </div>
+        <div class="live-reading">
+          <strong id="depthLiveValue" class="live-value">--</strong>
+          <span id="depthLastCallout" class="live-rate">No callout yet</span>
+          <span id="depthUpdated" class="live-updated"></span>
+        </div>
+      </section>
+
+      <section id="monitors" class="monitor-list"></section>
+
+      <section class="recent">
+        <h2>Recent announcements</h2>
+        <div id="recentEvents" class="event-list"><p>None yet.</p></div>
+      </section>
+    </main>
+
+    <template id="monitorTemplate">
+      <article class="monitor-card">
+        <div class="monitor-heading">
+          <label class="enabled-row"><input data-field="enabled" type="checkbox" /> Monitor</label>
+          <span class="active-state">Normal</span>
+          <button data-action="remove" type="button" class="danger-button">Remove</button>
+        </div>
+        <div class="fields identity-fields">
+          <label>Label<input data-field="label" type="text" /></label>
+          <label>Signal K path<input data-field="path" type="text" spellcheck="false" /></label>
+          <label>Unit<input data-field="unit" type="text" /></label>
+          <label>Conversion
+            <select data-field="conversion">
+              <option value="none">No conversion</option>
+              <option value="kelvinToCelsius">Kelvin to Celsius</option>
+              <option value="metersPerSecondToKnots">m/s to knots</option>
+              <option value="radiansToDegrees">Radians to degrees</option>
+            </select>
+          </label>
+          <label>Direction wording
+            <select data-field="directionMode">
+              <option value="none">None</option>
+              <option value="portStarboard">Port / Starboard</option>
+            </select>
+          </label>
+          <label class="check-row"><input data-field="absoluteValue" type="checkbox" /> Monitor absolute value</label>
+        </div>
+        <div class="live-reading">
+          <strong class="live-value">--</strong>
+          <span class="live-rate" tabindex="0" aria-label="Live rate help. This is the calculated change in the displayed value per minute. A dash means there is no usable value yet, or the minimum rate sample time has not elapsed. Rate alerts are evaluated only when a Rise per minute or Fall per minute threshold is configured." title="Calculated change in the displayed value per minute.&#10;&#10;Rate -- means there is no usable value yet, or the minimum rate sample time has not elapsed.&#10;&#10;Rate alerts require a Rise/min or Fall/min threshold.">Rate --</span>
+          <span class="live-updated"></span>
+        </div>
+        <div class="fields tuning-fields">
+          <label>
+            <span class="field-label">Rate window (s)<span class="help-tip" tabindex="0" aria-label="Rate window help. How far back samples are retained when calculating rise or fall per minute. A longer window is smoother but slower to react. Suggested starting value: 60 seconds. Use 120 to 300 seconds for a noisy or slowly changing sensor. This setting matters only when a Rise/min or Fall/min rule is configured." title="How far back samples are retained when calculating rise or fall per minute. A longer window is smoother but slower to react.&#10;&#10;Suggested: 60 s. Use 120-300 s for a noisy or slowly changing sensor.&#10;&#10;Only used when a Rise/min or Fall/min rule is configured.">?</span></span>
+            <input data-field="rateWindowSeconds" type="number" min="10" max="3600" />
+          </label>
+          <label>
+            <span class="field-label">Minimum rate sample (s)<span class="help-tip" tabindex="0" aria-label="Minimum rate sample help. The minimum elapsed time required before a rise or fall rate can be calculated. It prevents very short spikes from producing extreme rates. Suggested starting value: 10 seconds. Use 15 to 30 seconds for a noisy sensor." title="Minimum elapsed time before a rise or fall rate is calculated. This prevents very short spikes producing extreme rates.&#10;&#10;Suggested: 10 s. Use 15-30 s for a noisy sensor.">?</span></span>
+            <input data-field="minimumRateSampleSeconds" type="number" min="1" max="600" />
+          </label>
+          <label>
+            <span class="field-label">Value hysteresis<span class="help-tip" tabindex="0" aria-label="Value hysteresis help. How far the value must move back beyond an active threshold before its alert clears, measured in the displayed unit. This prevents alert chatter. Suggested starting values: depth 0.2 metres, temperature 1 degree Celsius, XTE 5 metres." title="How far the value must move back beyond an active threshold before its alert clears, in the displayed unit. This prevents alert chatter.&#10;&#10;Suggested starts: Depth 0.2 m; Temperature 1 °C; XTE 5 m.">?</span></span>
+            <input data-field="hysteresis" type="number" min="0" step="0.1" />
+          </label>
+          <label>
+            <span class="field-label">Rate hysteresis/min<span class="help-tip" tabindex="0" aria-label="Rate hysteresis per minute help. How far the calculated rate must fall back below an active rise or fall threshold before the rate alert clears, in displayed units per minute. Suggested starting value: about 10 percent of the configured Rise/min or Fall/min threshold. Use zero when no rate rule is configured." title="How far the calculated rate must fall back below an active Rise/min or Fall/min threshold before the rate alert clears, in displayed units per minute.&#10;&#10;Suggested: about 10% of the configured rate threshold. Use 0 when no rate rule is configured.">?</span></span>
+            <input data-field="rateHysteresisPerMinute" type="number" min="0" step="0.1" />
+          </label>
+        </div>
+        <div class="rule-table">
+          <div class="rule-row rule-header">
+            <span>Level</span><span>Below</span><span>Above</span><span>Rise/min</span><span>Fall/min</span><span>Repeat</span>
+          </div>
+          <div class="rule-row" data-level="information">
+            <label class="level information"><input data-rule="enabled" type="checkbox" /> Information</label>
+            <input data-rule="minimum" type="number" step="any" placeholder="off" />
+            <input data-rule="maximum" type="number" step="any" placeholder="off" />
+            <input data-rule="risePerMinute" type="number" min="0" step="any" placeholder="off" />
+            <input data-rule="fallPerMinute" type="number" min="0" step="any" placeholder="off" />
+            <label class="repeat"><input data-rule="repeatSeconds" type="number" min="1" /> <span>s</span></label>
+          </div>
+          <div class="rule-row" data-level="warning">
+            <label class="level warning"><input data-rule="enabled" type="checkbox" /> Warning</label>
+            <input data-rule="minimum" type="number" step="any" placeholder="off" />
+            <input data-rule="maximum" type="number" step="any" placeholder="off" />
+            <input data-rule="risePerMinute" type="number" min="0" step="any" placeholder="off" />
+            <input data-rule="fallPerMinute" type="number" min="0" step="any" placeholder="off" />
+            <label class="repeat"><input data-rule="repeatSeconds" type="number" min="1" /> <span>s</span></label>
+          </div>
+          <div class="rule-row" data-level="danger">
+            <label class="level danger"><input data-rule="enabled" type="checkbox" /> Danger</label>
+            <input data-rule="minimum" type="number" step="any" placeholder="off" />
+            <input data-rule="maximum" type="number" step="any" placeholder="off" />
+            <input data-rule="risePerMinute" type="number" min="0" step="any" placeholder="off" />
+            <input data-rule="fallPerMinute" type="number" min="0" step="any" placeholder="off" />
+            <label class="repeat"><input data-rule="repeatSeconds" type="number" min="1" /> <span>s</span></label>
+          </div>
+        </div>
+      </article>
+    </template>
+
+    <script src="./alerts.js"></script>
+  </body>
+</html>
+

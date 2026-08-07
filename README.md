@@ -1,10 +1,12 @@
 # AJRM Marine Instruments
 
-## Version 0.7.0
+## Version 0.8.0
 
-Version 0.7.0 is the reviewed standalone baseline before Instruments and
-Instrument Alerts are combined. It declares the supported Node runtime and API,
-restarts subscriptions safely, and removes an obsolete configuration-key alias.
+Version 0.8.0 combines AJRM Marine Instruments and AJRM Marine Instrument
+Alerts into one Signal K package. The gauge renderer and alert evaluator remain
+separate internal modules, but now share one lifecycle, configuration surface,
+test suite, and web application. Existing live alert settings continue to use
+`ajrm-marine-instrument-alerts-settings.json`.
 
 Signal K plugin configuration includes a **Displayed instruments** group. Each
 card can be shown or hidden independently: Depth, Wind, SOG, COG, Heading, XTE,
@@ -13,10 +15,10 @@ visible by default for compatibility with existing installations.
 
 > **Alpha Release disclaimer:** This software is Alpha Release and has not been tested in live environments and must not be relied upon for navigation or safety. The Authors do not accept any responsibility for loss or damage as a result of using this software.
 
-AJRM Marine Instruments is a Signal K webapp and plugin for compact, readable boat
-instruments. It is deliberately display-only: audible monitoring, limits,
-rate-of-change rules, severity, and repetition are owned by the separate
-**AJRM Marine Instrument Alerts** app.
+AJRM Marine Instruments is a Signal K webapp and plugin for compact, readable
+boat instruments and configurable instrument monitoring. Its alert provider
+publishes standards-compatible Signal K notifications; AJRM Marine
+Notifications and Audio remain separate authorities for brokering and delivery.
 
 It displays:
 
@@ -49,7 +51,7 @@ plugins.ajrmMarineInstruments.pilotHelmAngle
 The value uses Signal K radians. It is present only while
 `steering.autopilot.state` explicitly reports `auto`, `heading`, `wind`, or
 `route`; the path is cleared to `null` in standby or when the mode is unknown.
-In AJRM Marine Instrument Alerts, select **Radians to degrees** if thresholds
+In the **Alert settings** view, select **Radians to degrees** if thresholds
 are to be entered and spoken in degrees.
 
 The plugin also publishes the currently selected cross-track error at:
@@ -69,7 +71,7 @@ keep an XTE alarm active after route termination.
 
 ```bash
 cd ~/.signalk
-npm install git+https://github.com/ajrm-marine-suite/signalk-ajrm-marine-instruments.git#v0.7.0 --omit=dev --no-package-lock
+npm install git+https://github.com/ajrm-marine-suite/signalk-ajrm-marine-instruments.git#v0.8.0 --omit=dev --no-package-lock
 sudo systemctl restart signalk
 ```
 
@@ -77,11 +79,18 @@ Then open the webapp on your Signal K server:
 
 `https://<signal-k-host>:3443/signalk-ajrm-marine-instruments/`
 
+Use **Alert settings** in the header, or open:
+
+`https://<signal-k-host>:3443/signalk-ajrm-marine-instruments/alerts.html`
+
 ## Configuration
 
 The plugin settings allow you to choose the depth source, exhaust water temperature path, and refresh interval.
 
-Configure spoken Information, Warning, and Danger rules in **AJRM Marine Instrument Alerts**. That app can monitor any numeric Signal K path, including these same depth and temperature paths.
+Configure spoken Information, Warning, and Danger rules in the integrated
+**Alert settings** view. It can monitor any numeric Signal K path, including
+these same depth and temperature paths. State-changing controls require Signal K
+read/write or administrator access when security is enabled.
 
 ## Notes
 

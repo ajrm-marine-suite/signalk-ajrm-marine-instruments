@@ -77,6 +77,21 @@ p {
   font-weight: 850;
 }
 
+.alerts-link {
+  color: #7bd9c5;
+  text-decoration: none;
+  border: 1px solid rgba(123, 217, 197, 0.55);
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-size: 0.78rem;
+}
+
+.alerts-link:hover,
+.alerts-link:focus-visible {
+  background: rgba(123, 217, 197, 0.14);
+  outline: none;
+}
+
 #statusDot {
   width: 11px;
   height: 11px;

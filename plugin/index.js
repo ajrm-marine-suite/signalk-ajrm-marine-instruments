@@ -3,6 +3,7 @@
 const packageInfo = require("../package.json");
 const openApi = require("./openApi.json");
 const { buildInstrumentState } = require("./lib/instruments");
+const createInstrumentAlerts = require("./alerts");
 
 const PLUGIN_ID = "signalk-ajrm-marine-instruments";
 const AJRM_MARINE_INSTRUMENTS_API_REGISTRY = Symbol.for("mcdonaldajr.ajrmMarineInstrumentsApi");
@@ -24,6 +25,7 @@ const DEFAULT_VISIBLE_INSTRUMENTS = Object.freeze({
 
 module.exports = function ajrmMarineInstruments(app) {
   const plugin = {};
+  const alertProvider = createInstrumentAlerts(app);
   let options = normalizeOptions({});
   let unsubscribes = [];
   let lastPublishedPilotHelmAngle = Symbol("not-published");
@@ -32,7 +34,8 @@ module.exports = function ajrmMarineInstruments(app) {
 
   plugin.id = PLUGIN_ID;
   plugin.name = "AJRM Marine Instruments";
-  plugin.description = "Attractive, large-format Signal K instrument displays.";
+  plugin.description =
+    "Large-format Signal K instruments with integrated threshold and trend notifications.";
 
   plugin.schema = {
     type: "object",
@@ -74,6 +77,12 @@ module.exports = function ajrmMarineInstruments(app) {
           waterTemperature: instrumentVisibilitySchema("Water temperature"),
         },
       },
+      instrumentAlerts: {
+        ...alertProvider.schema,
+        title: "Instrument alerts and anchoring depth callouts",
+        description:
+          "Startup defaults for the integrated alert provider. Live edits are made in the Alerts view and persisted separately.",
+      },
     },
   };
 
@@ -85,6 +94,7 @@ module.exports = function ajrmMarineInstruments(app) {
     lastPublishedCrossTrackError = Symbol("not-published");
     subscribeToProjectionInputs();
     publishInstrumentProjections();
+    alertProvider.start(pluginOptions.instrumentAlerts || {});
     const api = {
       pluginId: plugin.id,
       version: packageInfo.version,
@@ -96,6 +106,7 @@ module.exports = function ajrmMarineInstruments(app) {
   };
 
   plugin.stop = () => {
+    alertProvider.stop();
     running = false;
     stopSubscriptions();
     publishPilotHelmValue(null);
@@ -119,6 +130,8 @@ module.exports = function ajrmMarineInstruments(app) {
       }
     });
 
+    alertProvider.registerWithRouter(scopedRouter(router, "/alerts"));
+
   };
 
   plugin.getOpenApi = () => openApi;
@@ -132,6 +145,7 @@ module.exports = function ajrmMarineInstruments(app) {
         refreshIntervalSeconds: options.refreshIntervalSeconds,
         visibleInstruments: { ...options.visibleInstruments },
       },
+      alerts: alertProvider.getStatus(),
       derivedPaths: {
         contract: "ajrm-marine-instruments-derived-paths-v1",
         contractVersion: 1,
@@ -213,6 +227,14 @@ module.exports = function ajrmMarineInstruments(app) {
         // Signal K unsubscribe callbacks are best-effort during restart/stop.
       }
     }
+  }
+
+  function scopedRouter(router, prefix) {
+    return {
+      get(route, ...handlers) { router.get(`${prefix}${route}`, ...handlers); },
+      put(route, ...handlers) { router.put(`${prefix}${route}`, ...handlers); },
+      post(route, ...handlers) { router.post(`${prefix}${route}`, ...handlers); },
+    };
   }
 
   function publishPilotHelmValue(value) {
