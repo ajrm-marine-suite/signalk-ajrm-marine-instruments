@@ -1,5 +1,12 @@
 # AJRM Marine Instruments
 
+## Version 0.8.2
+
+Version 0.8.2 removes the Drop Anchor control from Instruments. Display now
+owns the chart anchor marker and Anchored/Coastal action in its Profiles menu.
+The optional anchoring depth callout remains available here as an independent
+instrument facility.
+
 ## Version 0.8.0
 
 Version 0.8.0 combines AJRM Marine Instruments and AJRM Marine Instrument

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.8.2
+
+- Remove Drop Anchor from Instruments and retire its Traffic-profile bridge;
+  chart anchoring now belongs to Display's Profiles menu.
+- Retain the independent configurable anchoring depth-callout facility.
+
 ## 0.8.1
 
 - Add concise purpose headers to every maintained runtime module so its role is

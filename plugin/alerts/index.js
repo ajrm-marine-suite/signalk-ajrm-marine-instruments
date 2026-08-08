@@ -21,7 +21,6 @@ const {
 const PLUGIN_ID = "signalk-ajrm-marine-instruments";
 const SETTINGS_FILE = "ajrm-marine-instrument-alerts-settings.json";
 const NOTIFICATION_ROOT = "notifications.ajrmMarineInstrumentAlerts";
-const AJRM_MARINE_TRAFFIC_API_REGISTRY = Symbol.for("ajrmMarineTrafficApi");
 const DEPTH_CALLOUT_NOTIFICATION_PATH =
   "notifications.environment.depth.callout";
 const DEPTH_CALLOUT_CLEAR_MILLISECONDS = 30_000;
@@ -319,39 +318,6 @@ module.exports = function ajrmMarineInstrumentAlerts(app) {
       }
     }));
 
-    router.post("/depth-callout/drop", requireWriteAccess((_req, res) => {
-      const depth = depthCalloutState.lastDepthMeters;
-      if (!Number.isFinite(depth)) {
-        res.status(409).json({ ok: false, error: "No recent depth is available." });
-        return;
-      }
-      const trafficProfile = selectTrafficAnchorProfile();
-      const message = `Anchor dropped in ${formatDepth(depth, true)}.`;
-      publishDepthCallout({
-        depthMeters: depth,
-        timestamp: Date.now(),
-        message,
-        forced: true,
-        kind: "anchor-dropped",
-      });
-      depthCalloutState = {
-        ...depthCalloutState,
-        anchorDropActive: true,
-        lastAnnouncement: {
-          message,
-          kind: "anchor-dropped",
-          ts: new Date().toISOString(),
-        },
-        lastAnchorDrop: {
-          depthMeters: depth,
-          message,
-          trafficProfile,
-          ts: new Date().toISOString(),
-        },
-      };
-      publishStatusProjection();
-      res.json({ ok: true, depthMeters: depth, trafficProfile });
-    }));
   };
 
   plugin.getStatus = () => statusResponse();
@@ -866,8 +832,6 @@ module.exports = function ajrmMarineInstrumentAlerts(app) {
   }
 
   function statusResponse() {
-    const trafficProfile = currentTrafficProfileStatus();
-    resetAnchorDropAfterProfileChange(trafficProfile);
     return {
       ok: true,
       plugin: PLUGIN_ID,
@@ -876,14 +840,12 @@ module.exports = function ajrmMarineInstrumentAlerts(app) {
       timestamp: new Date().toISOString(),
       capabilities: {
         anchoringDepthCallout: true,
-        anchorDroppedSelectsTrafficProfile: true,
       },
       monitors: options.monitors.map((monitor) => ({
         ...monitor,
         state: publicState(states.get(monitor.id) || createMonitorState()),
       })),
       depthCallout: publicDepthCalloutStatus(),
-      trafficProfile,
       recentEvents,
     };
   }
@@ -909,13 +871,10 @@ module.exports = function ajrmMarineInstrumentAlerts(app) {
     return {
       ...options.depthCallout,
       available: true,
-      anchorDroppedSelectsTrafficProfile: true,
       active: options.enabled && options.depthCallout.enabled,
       lastDepthMeters: depthCalloutState.lastDepthMeters,
       lastUpdatedAt: depthCalloutState.lastUpdatedAt,
       lastAnnouncement: depthCalloutState.lastAnnouncement,
-      lastAnchorDrop: depthCalloutState.lastAnchorDrop,
-      anchorDropActive: depthCalloutState.anchorDropActive === true,
       notificationActive: Boolean(depthCalloutState.activeNotificationId),
       notificationClearsAt: depthCalloutState.notificationClearsAt,
       lastNotificationClearedAt: depthCalloutState.lastClearedAt,
@@ -930,65 +889,6 @@ module.exports = function ajrmMarineInstrumentAlerts(app) {
 
   function enabledMonitorCount() {
     return options.enabled ? options.monitors.filter((monitor) => monitor.enabled).length : 0;
-  }
-
-  function selectTrafficAnchorProfile() {
-    const api = trafficApi();
-    if (!api || typeof api.setProfile !== "function") {
-      return {
-        requested: "anchor",
-        available: false,
-        ok: false,
-        message: "AJRM Marine Traffic profile API is not available.",
-      };
-    }
-    try {
-      const profiles = api.setProfile("anchor");
-      return {
-        requested: "anchor",
-        available: true,
-        ok: true,
-        profile: profiles?.current || "anchor",
-      };
-    } catch (error) {
-      return {
-        requested: "anchor",
-        available: true,
-        ok: false,
-        error: error.message,
-      };
-    }
-  }
-
-  function trafficApi() {
-    return app.ajrmMarineTrafficApi || globalThis[AJRM_MARINE_TRAFFIC_API_REGISTRY] || null;
-  }
-
-  function currentTrafficProfileStatus() {
-    const api = trafficApi();
-    if (!api || typeof api.status !== "function") {
-      return { available: false, current: null };
-    }
-    try {
-      const status = api.status();
-      const current = String(status?.profiles?.current || status?.profile || "").trim().toLowerCase() || null;
-      return { available: true, current };
-    } catch (error) {
-      return { available: true, current: null, error: error.message };
-    }
-  }
-
-  function resetAnchorDropAfterProfileChange(trafficProfile) {
-    if (
-      depthCalloutState.anchorDropActive === true &&
-      trafficProfile?.current &&
-      trafficProfile.current !== "anchor"
-    ) {
-      depthCalloutState = {
-        ...depthCalloutState,
-        anchorDropActive: false,
-      };
-    }
   }
 
   function loadRuntimeSettings() {
@@ -1031,8 +931,6 @@ function createDepthCalloutState() {
     lastAnnouncedBucket: null,
     lastAnnouncedAt: null,
     lastAnnouncement: null,
-    lastAnchorDrop: null,
-    anchorDropActive: false,
     activeNotificationId: null,
     notificationClearsAt: null,
     lastClearedAt: null,

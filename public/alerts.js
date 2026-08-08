@@ -30,7 +30,6 @@ const elements = {
   depthLiveValue: document.getElementById("depthLiveValue"),
   depthLastCallout: document.getElementById("depthLastCallout"),
   depthUpdated: document.getElementById("depthUpdated"),
-  anchorDropped: document.getElementById("anchorDropped"),
   monitors: document.getElementById("monitors"),
   monitorTemplate: document.getElementById("monitorTemplate"),
   addMonitor: document.getElementById("addMonitor"),
@@ -45,7 +44,6 @@ let settings = { enabled: true, monitors: [], depthCallout: { ...DEFAULT_DEPTH_C
 let refreshTimer = null;
 let dirty = false;
 let saving = false;
-let anchorDropInProgress = false;
 
 elements.enabled.addEventListener("change", markDirty);
 [
@@ -65,7 +63,6 @@ elements.addMonitor.addEventListener("click", () => {
   renderSettings();
 });
 elements.saveSettings.addEventListener("click", saveSettings);
-elements.anchorDropped.addEventListener("click", markAnchorDropped);
 elements.monitors.addEventListener("input", markDirty);
 elements.monitors.addEventListener("change", markDirty);
 
@@ -296,9 +293,6 @@ function renderDepthCalloutStatus(value) {
   elements.depthUpdated.textContent = value.lastUpdatedAt
     ? `Updated ${new Date(value.lastUpdatedAt).toLocaleTimeString()}`
     : "";
-  const hasDepth = Number.isFinite(Number(value.lastDepthMeters));
-  elements.anchorDropped.disabled = anchorDropInProgress || !hasDepth;
-  elements.anchorDropped.textContent = value.anchorDropActive === true ? "Anchor Dropped" : "Drop Anchor";
 }
 
 function lastAnnouncementMessage(value) {
@@ -319,37 +313,6 @@ function readDepthCalloutFromPage() {
     minimumIntervalSeconds: Number(elements.depthMinimumInterval.value),
     repeatSameBucketSeconds: Number(elements.depthRepeatSame.value),
   };
-}
-
-async function markAnchorDropped() {
-  if (anchorDropInProgress) return;
-  anchorDropInProgress = true;
-  elements.anchorDropped.disabled = true;
-  elements.anchorDropped.textContent = "Dropping anchor...";
-  try {
-    const result = await postJson(`${API}/depth-callout/drop`, {});
-    setMessage(anchorDropMessage(result));
-  } catch (error) {
-    setMessage(error.message, true);
-  } finally {
-    anchorDropInProgress = false;
-    await refreshStatus();
-  }
-}
-
-function anchorDropMessage(result) {
-  const depth = Number(result.depthMeters).toFixed(1);
-  const traffic = result.trafficProfile || {};
-  if (traffic.ok === true) {
-    return `Anchor dropped in ${depth} m; Traffic profile set to Anchor`;
-  }
-  if (traffic.available === false) {
-    return `Anchor dropped in ${depth} m; Traffic profile not changed: Traffic API unavailable`;
-  }
-  if (traffic.error) {
-    return `Anchor dropped in ${depth} m; Traffic profile not changed: ${traffic.error}`;
-  }
-  return `Anchor dropped in ${depth} m`;
 }
 
 function blankMonitor(number) {
@@ -492,4 +455,3 @@ async function postJson(url, body) {
   if (!response.ok) throw new Error(responseBody.error || `HTTP ${response.status}`);
   return responseBody;
 }
-

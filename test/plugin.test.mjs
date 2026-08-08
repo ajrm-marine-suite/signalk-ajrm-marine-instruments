@@ -163,7 +163,6 @@ test("integrates the alert provider routes and status", () => {
   assert.ok(routes.has("GET /alerts/status"));
   assert.ok(routes.has("GET /alerts/settings"));
   assert.ok(routes.has("PUT /alerts/settings"));
-  assert.ok(routes.has("POST /alerts/depth-callout/drop"));
   assert.equal(app.ajrmMarineInstrumentsApi.status().alerts.enabled, false);
   assert.equal(app.ajrmMarineInstrumentsApi.status().alerts.capabilities.anchoringDepthCallout, true);
   plugin.stop();

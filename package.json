@@ -1,6 +1,6 @@
 {
   "name": "signalk-ajrm-marine-instruments",
-  "version": "0.8.1",
+  "version": "0.8.2",
   "description": "Large-format Signal K instrument display for AJRM Marine Suite.",
   "main": "plugin/index.js",
   "scripts": {

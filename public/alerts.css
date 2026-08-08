@@ -43,7 +43,6 @@ button:disabled { box-shadow: none; opacity: .55; cursor: default; transform: no
 .monitor-list { display: grid; gap: 18px; }
 .callout-card { padding: 18px; margin-bottom: 18px; }
 .callout-heading { margin-bottom: 15px; flex-wrap: wrap; }
-.callout-heading #anchorDropped { margin-left: auto; }
 .callout-fields { grid-template-columns: 2fr repeat(5, 1fr) minmax(130px, .7fr); }
 .check-row { display: flex; align-items: center; gap: 8px; min-height: 100%; padding-top: 24px; font-weight: 800; }
 .active-state.armed { background: var(--accent); color: #052019; }
@@ -90,7 +89,6 @@ input[type="checkbox"] { width: 18px; height: 18px; margin: 0; accent-color: var
   main { padding: 14px; }
   header { align-items: flex-start; flex-direction: column; }
   .identity-fields, .tuning-fields, .callout-fields { grid-template-columns: 1fr 1fr; }
-  .callout-heading #anchorDropped { margin-left: 0; }
 }
 
 @media (max-width: 540px) {
@@ -98,4 +96,3 @@ input[type="checkbox"] { width: 18px; height: 18px; margin: 0; accent-color: var
   .toolbar { position: static; }
   .check-row { padding-top: 0; }
 }
-

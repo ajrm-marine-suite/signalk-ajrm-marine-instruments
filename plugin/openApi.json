@@ -2,7 +2,7 @@
   "openapi": "3.0.3",
   "info": {
     "title": "AJRM Marine Instruments API",
-    "version": "0.8.1"
+    "version": "0.8.2"
   },
   "paths": {
     "/status": {
@@ -41,17 +41,6 @@
         "responses": {
           "200": { "description": "Saved settings" },
           "403": { "description": "Read/write access required" }
-        }
-      }
-    },
-    "/alerts/depth-callout/drop": {
-      "post": {
-        "summary": "Announce anchor drop and request the Traffic anchor profile",
-        "security": [{ "signalk": ["readwrite"] }],
-        "responses": {
-          "200": { "description": "Anchor drop recorded" },
-          "403": { "description": "Read/write access required" },
-          "409": { "description": "No recent depth available" }
         }
       }
     }
