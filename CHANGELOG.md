@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.8.1
+
+- Add concise purpose headers to every maintained runtime module so its role is
+  clear before reading implementation details.
+- Add a regression check that prevents new source modules from being introduced
+  without a module-purpose header.
+- Align OpenAPI metadata with the package release and test that the versions do
+  not drift apart again.
+- Preserve existing runtime contracts and behaviour following a suite-wide
+  maintainability and Signal K integration review.
+- Refresh Instruments browser asset cache keys to the package release.
+
 ## 0.6.9
 
 - Expose an in-process status API and versioned contract for the derived

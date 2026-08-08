@@ -1,3 +1,7 @@
+/**
+ * Implements the monitor engine responsibilities of the AJRM Marine Instruments Signal K server.
+ */
+
 "use strict";
 
 const LEVELS = ["danger", "warning", "information"];

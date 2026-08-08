@@ -1,3 +1,7 @@
+/**
+ * Implements the alerts responsibilities of the AJRM Marine Instruments browser application.
+ */
+
 const API = "../plugins/signalk-ajrm-marine-instruments/alerts";
 const LEVELS = ["information", "warning", "danger"];
 const DEFAULT_REPEATS = { information: 300, warning: 60, danger: 15 };

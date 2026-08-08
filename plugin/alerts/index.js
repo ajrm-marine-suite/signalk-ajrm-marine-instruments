@@ -1,3 +1,7 @@
+/**
+ * Implements the index responsibilities of the AJRM Marine Instruments Signal K server.
+ */
+
 "use strict";
 
 const fs = require("node:fs");

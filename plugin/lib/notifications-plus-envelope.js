@@ -1,3 +1,7 @@
+/**
+ * Implements the notifications plus envelope responsibilities of the AJRM Marine Instruments Signal K server.
+ */
+
 "use strict";
 
 const { randomUUID } = require("node:crypto");

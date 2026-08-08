@@ -1,3 +1,7 @@
+/**
+ * Browser entry point for AJRM Marine Instruments; binds operator controls and renders server state.
+ */
+
 const API = "../plugins/signalk-ajrm-marine-instruments";
 const DEFAULT_REFRESH_SECONDS = 3;
 const HIDDEN_REFRESH_SECONDS = 15;

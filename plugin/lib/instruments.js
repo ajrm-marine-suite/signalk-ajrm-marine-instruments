@@ -1,3 +1,7 @@
+/**
+ * Implements the instruments responsibilities of the AJRM Marine Instruments Signal K server.
+ */
+
 "use strict";
 
 const MS_TO_KNOTS = 1.9438444924406048;
